@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discounts - E-commerce Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="\static\style\settings.css">
+    <link rel="stylesheet" href="\static\style\Dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>ShopAdmin</span>
+            </div>
+            <ul class="menu">
+                <li><a href="{% url 'Dashboard' %}"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                <li><a href="{% url 'product' %}"><i class="fas fa-box"></i><span>Products</span></a></li>
+                <li><a href="{% url 'orders' %}"><i class="fas fa-shopping-cart"></i><span>Orders</span></a></li>
+                <li><a href="{% url 'customers' %}"><i class="fas fa-users"></i><span>Customers</span></a></li>
+                <li><a href="{% url 'messages' %}"><i class="fas fa-box"></i><span>Messages</span></a></li>
+                <li class="active"><a href="{% url 'discounts' %}"><i class="fas fa-tag"></i><span>Discounts</span></a></li>
+                <li><a href="{% url 'settings' %}"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+                <li><a href="{% url 'Logout' %}"><i class="fas fa-box"></i><span>Logout</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <div class="top-nav">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="search-input" placeholder="Search discounts...">
+                </div>
+                {% include "admin.html" %}
+            </div>
+
+            <!-- Discounts Content -->
+            <div class="content">
+                <div class="content-header">
+                    <h1>Discounts Management</h1>
+                    <a href="{% url 'Add_Discount' %}">
+                        <button class="btn-add">
+                            <i class="fas fa-plus"></i> Add New Discount
+                        </button>
+                    </a>
+                </div>
+                
+                <!-- Discounts Table -->
+                <div class="recent-orders">
+                    <div class="orders-header">
+                        <h3>All Discounts</h3>
+                        <div class="filter-options">
+                            <select id="discount-filter">
+                                <option value="all">All Discounts</option>
+                                <option value="active">Active</option>
+                                <option value="expired">Expired</option>
+                                <option value="scheduled">Scheduled</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="discounts-table-body">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                    <div class="pagination">
+                        <button id="prev-page" class="btn-page"><i class="fas fa-chevron-left"></i></button>
+                        <span id="page-info"></span>
+                        <button id="next-page" class="btn-page"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Edit Discount Modal -->
+                <div id="edit-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close">×</span>
+                        <h2>Edit Discount</h2>
+                        <form id="edit-discount-form">
+                            <input type="hidden" id="edit-id">
+                            <label for="edit-code">Code:</label>
+                            <input type="text" id="edit-code" readonly>
+                            <label for="edit-discount-percent">Discount (%):</label>
+                            <input type="number" id="edit-discount-percent" min="0" max="100" required>
+                            <label for="edit-start-date">Start Date:</label>
+                            <input type="datetime-local" id="edit-start-date" required>
+                            <label for="edit-end-date">End Date:</label>
+                            <input type="datetime-local" id="edit-end-date" required>
+                            <label for="edit-is-active">Active:</label>
+                            <input type="checkbox" id="edit-is-active">
+                            <button type="submit" class="btn-add">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div id="delete-modal" class="modal" style="display: none;">
+                    <div class="modal-content delete-modal-content">
+                        <h2>Confirm Deletion</h2>
+                        <p id="delete-message">Are you sure you want to delete the discount "<span id="delete-code"></span>"? This action cannot be undone.</p>
+                        <div class="modal-actions">
+                            <button class="btn btn-secondary" id="cancel-delete">Cancel</button>
+                            <button class="btn btn-danger" id="confirm-delete">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Existing styles */
+        .content-header a {
+            text-decoration: none;
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-add {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn-add:hover {
+            background: #5649be;
+        }
+        .btn-action {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .btn-action.edit {
+            color: #6c5ce7;
+        }
+        .btn-action.edit:hover {
+            background: #f0efff;
+        }
+        .btn-action.delete {
+            color: #e74c3c;
+        }
+        .btn-action.delete:hover {
+            background: #fee2e2;
+        }
+        .status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status.scheduled {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .filter-options select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            outline: none;
+            font-size: 14px;
+            color: #555;
+            background: #f5f5f9;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        }
+        .delete-modal-content {
+            max-width: 400px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        #edit-discount-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #edit-discount-form label {
+            font-weight: 500;
+        }
+        #edit-discount-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #edit-discount-form button {
+            align-self: flex-end;
+        }
+
+        /* Delete Modal Specific Styles */
+        .delete-modal-content h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .delete-modal-content p {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .delete-modal-content #delete-code {
+            font-weight: 600;
+            color: #e74c3c;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn-secondary {
+            background: #f5f5f9;
+            color: #555;
+        }
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        /* Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-page {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-page:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-page:hover:not(:disabled) {
+            background: #5649be;
+        }
+        #page-info {
+            font-size: 14px;
+            color: #555;
+        }
+
+        /* Animation for modal */
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const couponsApiUrl = 'http://127.0.0.1:8000/api/coupons/';
+            const tableBody = document.getElementById('discounts-table-body');
+            const editModal = document.getElementById('edit-modal');
+            const deleteModal = document.getElementById('delete-modal');
+            const closeModal = document.getElementsByClassName('close')[0];
+            const editForm = document.getElementById('edit-discount-form');
+            const filterSelect = document.getElementById('discount-filter');
+            const searchInput = document.getElementById('search-input');
+            const prevPageBtn = document.getElementById('prev-page');
+            const nextPageBtn = document.getElementById('next-page');
+            const pageInfo = document.getElementById('page-info');
+            const cancelDeleteBtn = document.getElementById('cancel-delete');
+            const confirmDeleteBtn = document.getElementById('confirm-delete');
+
+            let allCoupons = [];
+            let currentPage = 1;
+            const itemsPerPage = 5;
+            let deleteId = null;
+            let deleteCode = null;
+
+            // Fetch and populate data
+            function fetchAndPopulateData(filter = 'all', search = '') {
+                fetch(couponsApiUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch coupons: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(coupons => {
+                        allCoupons = coupons;
+                        renderTable(filter, search);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching coupons data:', error);
+                        alert(`Error loading coupons: ${error.message}`);
+                    });
+            }
+
+            // Render table with pagination
+            function renderTable(filter, search) {
+                let filteredCoupons = allCoupons.filter(discount => {
+                    const status = discount.is_active ? 'active' : 
+                        new Date(discount.end_date) < new Date() ? 'expired' : 'scheduled';
+                    const matchesFilter = filter === 'all' || filter === status;
+                    const matchesSearch = discount.code.toLowerCase().includes(search.toLowerCase());
+                    return matchesFilter && matchesSearch;
+                });
+
+                const totalItems = filteredCoupons.length;
+                const totalPages = Math.ceil(totalItems / itemsPerPage);
+                currentPage = Math.min(currentPage, totalPages || 1);
+
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedCoupons = filteredCoupons.slice(startIndex, endIndex);
+
+                tableBody.innerHTML = '';
+                paginatedCoupons.forEach(discount => {
+                    const status = discount.is_active ? 'active' : 
+                        new Date(discount.end_date) < new Date() ? 'expired' : 'scheduled';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${discount.code}</td>
+                        <td>Percentage</td>
+                        <td>${discount.discount_percent}%</td>
+                        <td>${new Date(discount.start_date).toLocaleDateString()}</td>
+                        <td>${new Date(discount.end_date).toLocaleDateString()}</td>
+                        <td><span class="status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+                        <td>
+                            <button class="btn-action edit" data-id="${discount.id}" data-code="${discount.code}"><i class="fas fa-edit"></i></button>
+                            <button class="btn-action delete" data-id="${discount.id}" data-code="${discount.code}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Update pagination
+                pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
+            }
+
+            // Initial data fetch
+            fetchAndPopulateData();
+
+            // Filter change event
+            filterSelect.addEventListener('change', function() {
+                currentPage = 1;
+                fetchAndPopulateData(this.value, searchInput.value);
+            });
+
+            // Search input event
+            searchInput.addEventListener('input', function() {
+                currentPage = 1;
+                fetchAndPopulateData(filterSelect.value, this.value);
+            });
+
+            // Pagination events
+            prevPageBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable(filterSelect.value, searchInput.value);
+                }
+            });
+
+            nextPageBtn.addEventListener('click', function() {
+                const totalPages = Math.ceil(allCoupons.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable(filterSelect.value, searchInput.value);
+                }
+            });
+
+            // Delete functionality
+            tableBody.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-action.delete')) {
+                    const button = e.target.closest('.btn-action.delete');
+                    deleteId = button.dataset.id;
+                    deleteCode = button.dataset.code;
+                    document.getElementById('delete-code').textContent = deleteCode;
+                    deleteModal.style.display = 'block';
+                }
+            });
+
+            // Confirm delete
+            confirmDeleteBtn.addEventListener('click', function() {
+                fetch(`${couponsApiUrl}${deleteId}/`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (response.ok || response.status === 204) {
+                        deleteModal.style.display = 'none';
+                        fetchAndPopulateData(filterSelect.value, searchInput.value);
+                    } else {
+                        return response.json().then(err => {
+                            throw new Error(err.detail || `Failed to delete discount: ${response.status}`);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting discount:', error);
+                    alert(`Error deleting discount: ${error.message}`);
+                    deleteModal.style.display = 'none';
+                });
+            });
+
+            // Cancel delete
+            cancelDeleteBtn.addEventListener('click', function() {
+                deleteModal.style.display = 'none';
+                deleteId = null;
+                deleteCode = null;
+            });
+
+            // Close delete modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === deleteModal) {
+                    deleteModal.style.display = 'none';
+                    deleteId = null;
+                    deleteCode = null;
+                }
+            });
+
+            // Edit functionality
+            tableBody.addEventListener('click', function(e) {
+                if (e.target.closest('.btn-action.edit')) {
+                    const button = e.target.closest('.btn-action.edit');
+                    const id = button.dataset.id;
+                    const code = button.dataset.code;
+                    fetch(couponsApiUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to fetch coupon data: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const discount = data.find(d => d.id === parseInt(id));
+                            if (discount) {
+                                document.getElementById('edit-id').value = discount.id;
+                                document.getElementById('edit-code').value = discount.code;
+                                document.getElementById('edit-discount-percent').value = discount.discount_percent;
+                                document.getElementById('edit-start-date').value = discount.start_date.slice(0, 16);
+                                document.getElementById('edit-end-date').value = discount.end_date.slice(0, 16);
+                                document.getElementById('edit-is-active').checked = discount.is_active;
+                                editModal.style.display = 'block';
+                            } else {
+                                alert('Discount not found');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching coupon data:', error);
+                            alert(`Error loading coupon data: ${error.message}`);
+                        });
+                }
+            });
+
+            // Close edit modal
+            closeModal.onclick = function() {
+                editModal.style.display = 'none';
+            };
+
+            // Close edit modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === editModal) {
+                    editModal.style.display = 'none';
+                }
+            });
+
+            // Submit edit form
+            editForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const id = document.getElementById('edit-id').value;
+                const updatedDiscount = {
+                    code: document.getElementById('edit-code').value,
+                    discount_percent: parseFloat(document.getElementById('edit-discount-percent').value),
+                    start_date: document.getElementById('edit-start-date').value + ':00Z',
+                    end_date: document.getElementById('edit-end-date').value + ':00Z',
+                    is_active: document.getElementById('edit-is-active').checked
+                };
+
+                fetch(`${couponsApiUrl}${id}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedDiscount)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        editModal.style.display = 'none';
+                        fetchAndPopulateData(filterSelect.value, searchInput.value);
+                    } else {
+                        return response.json().then(err => {
+                            throw new Error(err.detail || `Failed to update discount: ${response.status}`);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating discount:', error);
+                    alert(`Error updating discount: ${error.message}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

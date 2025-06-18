@@ -1,0 +1,1106 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}My Account{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{% csrf_token %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
+{% block content %}
+<style>
+    /* Root Variables for Consistent Theming */
+    :root {
+        --primary: #2563eb; /* Vibrant blue for primary elements */
+        --primary-dark: #1e40af;
+        --secondary: #10b981; /* Green for success/accents */
+        --error: #ef4444; /* Red for errors */
+        --background: #f9fafb; /* Light background */
+        --card-bg: #ffffff; /* White for cards */
+        --text-primary: #111827; /* Dark text */
+        --text-secondary: #6b7280; /* Muted text */
+        --border: #e5e7eb; /* Light border */
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease-in-out;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--background);
+        color: var(--text-primary);
+        line-height: 1.6;
+        font-size: 16px;
+    }
+
+    /* Container */
+    .container {
+        display: flex;
+        max-width: 1440px;
+        margin: 24px auto;
+        padding: 16px;
+        gap: 24px;
+        min-height: calc(100vh - 120px);
+    }
+
+    /* Loading Spinner */
+    .loading-spinner {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        z-index: 1001;
+    }
+
+    @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 300px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        transition: var(--transition);
+    }
+
+    .sidebar:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-4px);
+    }
+
+    .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .profile-picture {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .profile-picture:hover {
+        transform: scale(1.05);
+    }
+
+    .profile-picture img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .user-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.4;
+    }
+
+    .user-email {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        word-break: break-all;
+    }
+
+    .nav-list {
+        list-style: none;
+        flex-grow: 1;
+        margin-top: 16px;
+    }
+
+    .nav-list li {
+        margin-bottom: 8px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .nav-link i {
+        margin-right: 12px;
+        font-size: 1.1rem;
+    }
+
+    .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--primary);
+        transform: translateX(4px);
+    }
+
+    .nav-link.active {
+        background: #dbeafe;
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: inset 0 0 0 2px var(--primary);
+    }
+
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        margin-top: auto;
+        background: var(--error);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+
+    .logout-btn:hover {
+        background: #dc2626;
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .logout-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+    }
+
+    .logout-btn i {
+        margin-right: 8px;
+    }
+
+    /* Main Content */
+    .main-content {
+        flex: 1;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+
+    .content-section {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .content-section.active {
+        display: block;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    /* Dashboard */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .dashboard-card {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .dashboard-card i {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 12px;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 8px 0;
+    }
+
+    .dashboard-card p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .recent-activity {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid var(--border);
+    }
+
+    .recent-activity h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    /* Profile Form */
+    .profile-form {
+        max-width: 600px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #f9fafb;
+        transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .submit-btn {
+        background: var(--primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .submit-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    /* Orders */
+    .orders-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .order-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        transition: var(--transition);
+    }
+
+    .order-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+
+    .order-status-paid {
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .order-status-pending {
+        color: #f59e0b;
+        font-weight: 500;
+    }
+
+    .order-date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 8px;
+    }
+
+    .view-details-btn {
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .view-details-btn:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+
+    .order-details {
+        display: none;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .order-details.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .order-product {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .order-product:last-child {
+        border-bottom: none;
+    }
+
+    .order-product img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 12px;
+    }
+
+    .order-product-details {
+        flex: 1;
+    }
+
+    .order-product-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .order-product-price {
+        color: var(--secondary);
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .order-product-quantity {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .rate-product-btn {
+        background: var(--primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .rate-product-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .rate-product-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    /* Wishlist */
+    .wishlist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .wishlist-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .wishlist-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .wishlist-item img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+    }
+
+    .wishlist-item .title {
+        padding: 12px;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .wishlist-item .price {
+        padding: 0 12px;
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .wishlist-item .actions {
+        padding: 12px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .wishlist-item .add-to-cart,
+    .wishlist-item .remove {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .wishlist-item .add-to-cart {
+        background: var(--primary);
+        color: #ffffff;
+    }
+
+    .wishlist-item .add-to-cart:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .wishlist-item .remove {
+        background: #fef2f2;
+        color: var(--error);
+    }
+
+    .wishlist-item .remove:hover {
+        background: var(--error);
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    /* Reviews */
+    .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .review-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        transition: var(--transition);
+    }
+
+    .review-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .review-item h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .review-item .rating {
+        color: #f59e0b;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .review-item p {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .review-item .date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    /* Messages */
+    .messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .message-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        background: #f9fafb;
+        transition: var(--transition);
+    }
+
+    .message-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .message-header h4 {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .message-date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .message-content {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .message-replied-by {
+        font-size: 0.875rem;
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        max-width: 500px;
+        margin: 5% auto;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-hover);
+        position: relative;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+
+    .close-modal:hover {
+        color: var(--text-primary);
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .star {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #d1d5db;
+        transition: var(--transition);
+    }
+
+    .star.active,
+    .star:hover {
+        color: #f59e0b;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .cancel-btn {
+        background: #f9fafb;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .cancel-btn:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+
+    .viewDetails {
+        cursor: pointer;
+    }
+
+    /* Enhanced Notification */
+    .notification {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .notification.success {
+        background: var(--secondary);
+    }
+
+    .notification.error {
+        background: var(--error);
+    }
+
+    .notification::before {
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        font-size: 1rem;
+    }
+
+    .notification.success::before {
+        content: '\f058';
+    }
+
+    .notification.error::before {
+        content: '\f06a';
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+
+    @keyframes slideOut {
+        from { transform: translateX(0); }
+        to { transform: translateX(100%); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .container {
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .sidebar {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .profile-info {
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+            gap: 12px;
+        }
+
+        .profile-picture {
+            width: 48px;
+            height: 48px;
+        }
+
+        .user-name {
+            font-size: 1rem;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+        }
+
+        .nav-list {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 12px;
+        }
+
+        .nav-link {
+            padding: 10px 12px;
+            font-size: 0.875rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid,
+        .wishlist-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+        }
+
+        .modal-content {
+            margin: 15% 16px;
+            padding: 20px;
+        }
+
+        .order-product {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .order-product img {
+            margin-bottom: 12px;
+        }
+
+        .rate-product-btn {
+            width: 100%;
+            margin-top: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .container {
+            margin: 8px;
+            padding: 8px;
+        }
+
+        .sidebar,
+        .main-content {
+            padding: 16px;
+        }
+
+        .profile-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-picture {
+            margin-bottom: 12px;
+        }
+
+        .dashboard-card,
+        .order-item,
+        .wishlist-item,
+        .review-item,
+        .message-item {
+            padding: 12px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 10px;
+            font-size: 0.875rem;
+        }
+
+        .submit-btn,
+        .view-details-btn,
+        .rate-product-btn,
+        .cancel-btn {
+            padding: 10px 16px;
+            font-size: 0.875rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .nav-link {
+            font-size: 0.75rem;
+            padding: 8px 10px;
+        }
+
+        .nav-link i {
+            font-size: 0.875rem;
+        }
+
+        .logout-btn {
+            font-size: 0.875rem;
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="container" role="main">
+    <div class="loading-spinner" id="loading-spinner"></div>
+    <!-- Sidebar -->
+    <aside class="sidebar" aria-label="User Navigation">
+        <div class="profile-info">
+            <div class="profile-picture">
+                <img id="profile-picture" src="" alt="Profile Picture">
+            </div>
+            <div class="user-details">
+                <div id="user-name" class="user-name"></div>
+                <div id="user-email" class="user-email"></div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-list">
+                <li><a href="#" class="nav-link active" data-section="dashboard" aria-current="page"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-section="profile"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="#" class="nav-link" data-section="orders"><i class="fas fa-box"></i> Orders</a></li>
+                <li><a href="#" class="nav-link" data-section="wishlist"><i class="fas fa-heart"></i>Wishlist</a></li>
+                <li><a href="#" class="nav-link" data-section="reviews"><i class="fas fa-star"></i>Reviews</a></li>
+                <li><a href="#" class="nav-link" data-section="messages"><i class="fas fa-envelope"></i> Messages</a></li>
+            </ul>
+        </nav>
+        <button class="logout-btn" onclick="logout()" aria-label="Logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="content-section active" aria-labelledby="dashboard-title">
+            <h2 id="dashboard-title" class="section-title">Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <i class="fas fa-box"></i>
+                    <h3 id="total-orders">0</h3>
+                    <p>Total Orders</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-heart"></i>
+                    <h3 id="wishlist-items">0</h3>
+                    <p>Wishlist Items</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-star"></i>
+                    <h3 id="reviews-count">0</h3>
+                    <p>Reviews Written</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-envelope"></i>
+                    <h3 id="messages-count">0</h3>
+                    <p>Messages</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-dollar-sign"></i>
+                    <h3 id="total-spent">$0</h3>
+                    <p>Total Spent</p>
+                </div>
+            </div>
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div id="recent-orders" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="content-section" aria-labelledby="profile-title">
+            <h2 id="profile-title" class="section-title">My Profile</h2>
+            <form id="profile-form" class="profile-form">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" name="first_name" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="last_name" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address">
+                </div>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </form>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders" class="content-section" aria-labelledby="orders-title">
+            <h2 id="orders-title" class="section-title">My Orders</h2>
+            <div id="orders-list" class="orders-list"></div>
+        </section>
+
+        <!-- Wishlist Section -->
+        <section id="wishlist" class="content-section" aria-labelledby="wishlist-title">
+            <h2 id="wishlist-title" class="section-title">My Wishlist</h2>
+            <div id="wishlist-grid" class="wishlist-grid"></div>
+        </section>
+
+        <!-- Reviews Section -->
+        <section id="reviews" class="content-section" aria-labelledby="reviews-title">
+            <h2 id="reviews-title" class="section-title">My Reviews</h2>
+            <div id="reviews-list" class="reviews-list"></div>
+        </section>
+
+        <!-- Messages Section -->
+        <section id="messages" class="content-section" aria-labelledby="messages-title">
+            <h2 id="messages-title" class="section-title">My Messages</h2>
+            <div id="messages-list" class="messages-list"></div>
+        </section>
+    </main>
+</div>
+
+<!-- Rating Modal -->
+<div id="rating-modal" class="modal" role="dialog" aria-labelledby="rating-product-title" aria-hidden="true">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeRatingModal()" aria-label="Close">×</span>
+        <h3 id="rating-product-title">Rate Product</h3>
+        <form id="rating-form">
+            <div class="form-group">
+                <label for="rating-value">Rating</label>
+                <div class="star-rating" id="star-rating" role="radiogroup" aria-label="Star Rating">
+                    <span class="star" data-rating="1" role="radio" aria-label="1 star" tabindex="0">★</span>
+                    <span class="star" data-rating="2" role="radio" aria-label="2 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="3" role="radio" aria-label="3 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="4" role="radio" aria-label="4 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="5" role="radio" aria-label="5 stars" tabindex="0">★</span>
+                </div>
+                <input type="hidden" id="rating-value" value="0">
+                <input type="hidden" id="product-id" value="">
+            </div>
+            <div class="form-group">
+                <label for="review-comment">Comment</label>
+                <textarea id="review-comment" rows="5" placeholder="Write your comment here..." required aria-required="true"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeRatingModal()" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Global variables
+let userReviews = [];
+let userMessages = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const userStatus = await checkUserStatus();
+        if (!userStatus) return; // Stop if user is not authenticated
+        
+        const userData = await fetchUserProfile();
+        const messagesData = await fetchMessages();
+        updateUI(userData, messagesData);
+        
+        setupEventListeners();
+        toggleLoadingState(false);
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Failed to initialize the page. Please try again.', 'error');
+    }
+});
+
+/**
+ * Toggles loading state
+ */
+function toggleLoadingState(isLoading) {
+    const mainContent = document.querySelector('.main-content');
+    const spinner = document.getElementById('loading-spinner');
+    if (isLoading) {
+        if (mainContent) {
+            mainContent.style.opacity = '0.5';
+            mainContent.style.pointerEvents = 'none';
+        }
+        spinner.style.display = 'block';
+        showNotification('Loading...', 'info');
+    } else {
+        if (mainContent) {
+            mainContent.style.opacity = '1';
+            mainContent.style.pointerEvents = 'auto';
+        }
+        spinner.style.display = 'none';
+    }
+}
+

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logout | E-commerce Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="\static\style\Dashboard.css">
+    <style>
+        /* Logout Page Specific Styles */
+        .logout-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 90vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .logout-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+        }
+        
+        .logout-icon {
+            font-size: 60px;
+            color: #6c5ce7;
+            margin-bottom: 20px;
+        }
+        
+        .logout-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .logout-message {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .logout-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn-logout {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-logout:hover {
+            background: #5649be;
+        }
+        
+        .btn-cancel {
+            background: #f5f5f9;
+            color: #555;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .btn-cancel:hover {
+            background: #e2e8f0;
+        }
+        
+        .loading-spinner {
+            display: none;
+            margin-left: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .modal-icon {
+            font-size: 60px;
+            color: #6c5ce7;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .modal-message {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar (hidden on logout page) -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>ShopAdmin</span>
+            </div>
+            <ul class="menu">
+                <li>
+                    <a href="{% url 'Dashboard' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'product' %}">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'orders' %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'customers' %}">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'messages' %}">
+                        <i class="fas fa-box"></i>
+                        <span>Messages</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'discounts' %}">
+                        <i class="fas fa-tag"></i>
+                        <span>Discounts</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'settings' %}">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="{% url 'Logout' %}">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <div class="top-nav">
+                <div class="search-box">
+                </div>
+                {% include "admin.html" %}
+            </div>
+            <!-- Main Content -->
+            <div class="main-content" style="margin-left: 0; background: #f5f5f9;">
+                <!-- Logout Content -->
+                <div class="logout-container">
+                    <div class="logout-card">
+                        <div class="logout-icon">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </div>
+                        <h2 class="logout-title">Ready to leave?</h2>
+                        <p class="logout-message">
+                            Are you sure you want to log out of your account? You'll need to sign in again to access the dashboard.
+                        </p>
+                        <div class="logout-actions">
+                            <button class="btn-cancel" id="cancelLogout">
+                                Cancel
+                            </button>
+                            <form action="{% url 'Logout' %}" method="POST" id="logoutForm" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="button" class="btn-logout" id="confirmLogout">
+                                    Log Out
+                                    <i class="fas fa-spinner loading-spinner" id="logoutSpinner"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal" id="logoutModal">
+                        <div class="modal-content">
+                            <div class="modal-icon">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </div>
+                            <h2 class="modal-title">Confirm Logout</h2>
+                            <p class="modal-message">
+                                Are you sure you want to log out? This action will end your session.
+                            </p>
+                            <div class="logout-actions">
+                                <button class="btn-cancel" id="modalCancel">Cancel</button>
+                                <button class="btn-logout" id="modalConfirmLogout">
+                                    Log Out
+                                    <i class="fas fa-spinner loading-spinner" id="modalLogoutSpinner"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('confirmLogout');
+            const logoutForm = document.getElementById('logoutForm');
+            const logoutSpinner = document.getElementById('logoutSpinner');
+            const modal = document.getElementById('logoutModal');
+            const modalConfirmBtn = document.getElementById('modalConfirmLogout');
+            const modalCancelBtn = document.getElementById('modalCancel');
+            const modalSpinner = document.getElementById('modalLogoutSpinner');
+
+            // Cancel button - return to dashboard
+            document.getElementById('cancelLogout').addEventListener('click', function() {
+                window.location.href = "{% url 'Dashboard' %}";
+            });
+
+            // Show modal when clicking Log Out button
+            logoutBtn.addEventListener('click', function() {
+                modal.style.display = 'flex';
+            });
+
+            // Handle modal cancel button
+            modalCancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+            });
+
+            // Handle modal confirm logout button
+            modalConfirmBtn.addEventListener('click', function() {
+                // Show loading spinner and disable button
+                modalConfirmBtn.disabled = true;
+                modalSpinner.style.display = 'inline-block';
+
+                // Submit the form
+                logoutForm.submit();
+            });
+        });
+    </script>
+</body>
+</html>

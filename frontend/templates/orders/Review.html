@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if Settings.logo %}
+        <link rel="icon" href="{{ Settings.logo.url }}" type="image/png">
+    {% else %}
+        <link rel="icon" href="\static\img\images (1).png" type="image/png">
+    {% endif %}
+    <title>Website Experience Review</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .review-container {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            max-width: 900px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .review-container:hover {
+            transform: translateY(-5px);
+        }
+
+        .review-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #87CEEB 0%, #4FC3F7 100%);
+        }
+
+        .image-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+        }
+
+        .review-illustration {
+            width: 260px;
+            height: 260px;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 30px rgba(135, 206, 235, 0.25);
+            transition: all 0.3s ease;
+        }
+
+        .review-illustration:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(135, 206, 235, 0.35);
+        }
+
+        .illustration-text {
+            text-align: center;
+            color: #4b5e7a;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+            max-width: 80%;
+        }
+
+        .form-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 1.8rem;
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            text-align: center;
+        }
+
+        .rating-section {
+            margin-bottom: 1.8rem;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+            padding: 0.8rem 0;
+        }
+
+        .star {
+            font-size: 2.2rem;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+            position: relative;
+            filter: grayscale(100%);
+        }
+
+        .star:hover {
+            transform: scale(1.1);
+            filter: grayscale(0%);
+        }
+
+        .star.filled {
+            filter: grayscale(0%);
+            transform: scale(1.05);
+        }
+
+        .star.filled:hover {
+            transform: scale(1.15);
+        }
+
+        .rating-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 1.2rem 0;
+            min-height: 50px;
+        }
+
+        .rating-emoji {
+            font-size: 2.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .rating-label {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .rating-images {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 0.8rem 0;
+            flex-wrap: wrap;
+        }
+
+        .rating-image {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            opacity: 0.4;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .rating-image:hover {
+            opacity: 0.8;
+            transform: scale(1.1);
+        }
+
+        .rating-image.active {
+            opacity: 1;
+            border-color: #87CEEB;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            transform: scale(1.15);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.8rem;
+            margin-bottom: 1.2rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            transition: border-color 0.3s ease, background 0.3s ease;
+            background: #fafafa;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #87CEEB;
+            background: white;
+        }
+
+        textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        button {
+            background: linear-gradient(135deg, #87CEEB 0%, #4FC3F7 100%);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(135, 206, 235, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(135, 206, 235, 0.4);
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .message {
+            margin-top: 1.2rem;
+            font-size: 0.95rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .success {
+            color: #059669;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            .review-container {
+                flex-direction: column;
+                padding: 2rem 1.5rem;
+                gap: 2rem;
+            }
+
+            .image-section {
+                min-height: auto;
+            }
+
+            .review-illustration {
+                width: 200px;
+                height: 200px;
+                font-size: 5rem;
+                margin-bottom: 1rem;
+            }
+
+            .star {
+                font-size: 1.8rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .rating-emoji {
+                font-size: 1.8rem;
+            }
+
+            .rating-image {
+                width: 36px;
+                height: 36px;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .review-container {
+                padding: 1.5rem 1rem;
+            }
+
+            .review-illustration {
+                width: 150px;
+                height: 150px;
+                font-size: 4rem;
+            }
+
+            .star {
+                font-size: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="review-container">
+        <!-- Left Side - Image Section -->
+        <div class="image-section">
+            <div class="review-illustration" id="mainIllustration" aria-label="Review illustration">
+                📝
+            </div>
+            <div class="illustration-text">
+                <strong>Share Your Experience</strong><br>
+                Your feedback helps us improve our website and provide better service for everyone.
+            </div>
+        </div>
+
+        <!-- Right Side - Form Section -->
+        <div class="form-section">
+            <h1>Website Experience Review</h1>
+
+            <div class="rating-section">
+                <div class="star-rating" id="starRating" role="radiogroup" aria-label="Star rating">
+                    <span class="star" data-value="1" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="2" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="3" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="4" role="radio" aria-checked="false" tabindex="0">★</span>
+                    <span class="star" data-value="5" role="radio" aria-checked="false" tabindex="0">★</span>
+                </div>
+
+                <div class="rating-display">
+                    <div class="rating-emoji" id="ratingEmoji" aria-live="polite">🤔</div>
+                    <div class="rating-label" id="ratingLabel">Select your rating</div>
+                </div>
+
+                <div class="rating-images" id="ratingImages" role="radiogroup" aria-label="Emoji rating">
+                    <div class="rating-image" data-rating="1" role="radio" aria-checked="false" tabindex="0">😠</div>
+                    <div class="rating-image" data-rating="2" role="radio" aria-checked="false" tabindex="0">😞</div>
+                    <div class="rating-image" data-rating="3" role="radio" aria-checked="false" tabindex="0">😐</div>
+                    <div class="rating-image" data-rating="4" role="radio" aria-checked="false" tabindex="0">😊</div>
+                    <div class="rating-image" data-rating="5" role="radio" aria-checked="false" tabindex="0">😍</div>
+                </div>
+            </div>
+
+            <textarea id="comment" placeholder="Share your thoughts and experience with our website (optional)" aria-label="Review comments"></textarea>
+
+            <button id="submitReview" aria-label="Submit review">
+                <div class="button-content">
+                    <span>Submit Review</span>
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                </div>
+            </button>
+
+            <div id="message" class="message" role="alert"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stars = document.querySelectorAll('.star');
+            const comment = document.getElementById('comment');
+            const submitButton = document.getElementById('submitReview');
+            const messageDiv = document.getElementById('message');
+            const ratingLabel = document.getElementById('ratingLabel');
+            const ratingEmoji = document.getElementById('ratingEmoji');
+            const ratingImages = document.querySelectorAll('.rating-image');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const mainIllustration = document.getElementById('mainIllustration');
+            let selectedRating = 0;
+
+            const ratingData = {
+                0: { label: 'Select your rating', emoji: '🤔', illustration: '📝' },
+                1: { label: 'Terrible', emoji: '😠', illustration: '😤' },
+                2: { label: 'Poor', emoji: '😞', illustration: '😔' },
+                3: { label: 'Average', emoji: '😐', illustration: '🤷‍♂️' },
+                4: { label: 'Good', emoji: '😊', illustration: '👍' },
+                5: { label: 'Excellent', emoji: '😍', illustration: '🌟' }
+            };
+
+            // Handle star rating selection
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    selectedRating = parseInt(star.getAttribute('data-value'));
+                    updateStars();
+                    updateRatingDisplay();
+                    updateRatingImages();
+                    updateIllustration();
+                    updateARIA();
+                });
+
+                star.addEventListener('mouseover', () => {
+                    const value = parseInt(star.getAttribute('data-value'));
+                    highlightStars(value);
+                    updateRatingDisplay(value);
+                    updateIllustration(value);
+                });
+
+                star.addEventListener('mouseout', () => {
+                    updateStars();
+                    updateRatingDisplay();
+                    updateIllustration();
+                });
+
+                // Keyboard accessibility
+                star.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        selectedRating = parseInt(star.getAttribute('data-value'));
+                        updateStars();
+                        updateRatingDisplay();
+                        updateRatingImages();
+                        updateIllustration();
+                        updateARIA();
+                    }
+                });
+            });
+
+            // Handle rating image clicks
+            ratingImages.forEach(img => {
+                img.addEventListener('click', () => {
+                    selectedRating = parseInt(img.getAttribute('data-rating'));
+                    updateStars();
+                    updateRatingDisplay();
+                    updateRatingImages();
+                    updateIllustration();
+                    updateARIA();
+                });
+
+                // Keyboard accessibility
+                img.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        selectedRating = parseInt(img.getAttribute('data-rating'));
+                        updateStars();
+                        updateRatingDisplay();
+                        updateRatingImages();
+                        updateIllustration();
+                        updateARIA();
+                    }
+                });
+            });
+
+            function highlightStars(value) {
+                stars.forEach(s => {
+                    s.classList.toggle('filled', parseInt(s.getAttribute('data-value')) <= value);
+                });
+            }
+
+            function updateStars() {
+                highlightStars(selectedRating);
+            }
+
+            function updateRatingDisplay(tempRating = null) {
+                const rating = tempRating || selectedRating;
+                const data = ratingData[rating];
+                ratingLabel.textContent = data.label;
+                ratingEmoji.textContent = data.emoji;
+            }
+
+            function updateRatingImages() {
+                ratingImages.forEach(img => {
+                    const imgRating = parseInt(img.getAttribute('data-rating'));
+                    img.classList.toggle('active', imgRating === selectedRating);
+                });
+            }
+
+            function updateIllustration(tempRating = null) {
+                const rating = tempRating || selectedRating;
+                const data = ratingData[rating];
+                mainIllustration.textContent = data.illustration;
+            }
+
+            function updateARIA() {
+                stars.forEach(s => {
+                    s.setAttribute('aria-checked', parseInt(s.getAttribute('data-value')) === selectedRating);
+                });
+                ratingImages.forEach(img => {
+                    img.setAttribute('aria-checked', parseInt(img.getAttribute('data-rating')) === selectedRating);
+                });
+            }
+
+            function showMessage(text, type) {
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type} show`;
+                setTimeout(() => {
+                    messageDiv.classList.remove('show');
+                }, 5000);
+            }
+
+            function setLoading(loading) {
+                if (loading) {
+                    loadingSpinner.style.display = 'block';
+                    submitButton.disabled = true;
+                } else {
+                    loadingSpinner.style.display = 'none';
+                    submitButton.disabled = false;
+                }
+            }
+
+            // Handle form submission
+            submitButton.addEventListener('click', async () => {
+                if (selectedRating === 0) {
+                    showMessage('⚠️ Please select a rating first', 'error');
+                    return;
+                }
+
+                setLoading(true);
+
+                const reviewData = {
+                    rating: selectedRating,
+                    comment: comment.value.trim()
+                };
+
+                try {
+                    const response = await fetch('/api/site-reviews/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Include authentication token if required
+                            'Authorization': 'Bearer ' + localStorage.getItem('authToken') // Adjust based on your auth setup
+                        },
+                        body: JSON.stringify(reviewData)
+                    });
+
+                    if (response.ok) {
+                        showMessage('✅ Thank you! Your review has been submitted successfully', 'success');
+                        submitButton.innerHTML = '<div class="button-content"><span>Submitted ✓</span></div>';
+                        stars.forEach(s => s.style.pointerEvents = 'none');
+                        ratingImages.forEach(img => img.style.pointerEvents = 'none');
+                        comment.disabled = true;
+                        mainIllustration.textContent = '✅';
+
+                        setTimeout(() => {
+                            window.location.href = "/"; // Adjust to your home URL
+                        }, 2000);
+                    } else {
+                        const errorData = await response.json();
+                        showMessage(`❌ Failed to submit review: ${errorData.message || 'Unknown error'}`, 'error');
+                    }
+                } catch (error) {
+                    showMessage('❌ An error occurred while submitting your review. Please try again', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            // Initialize
+            updateRatingDisplay();
+            updateRatingImages();
+            updateIllustration();
+            updateARIA();
+        });
+    </script>
+</body>
+</html>

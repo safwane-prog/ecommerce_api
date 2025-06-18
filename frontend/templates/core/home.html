@@ -1,0 +1,207 @@
+{% extends 'core\base.html' %}
+{% load static %}
+
+{% block title %}home{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+<section id="hero-section" class="hero-section">
+    <div class="hero_contanre">
+        <div class="hero_context">
+            <h1 class="hero_context_title">FIND CLOTHES THAT MATCHES YOUR STYLE</h1>
+            <p>Browse through our diverse range of meticulously crafted garments, designed to bring out your individuality and cater to your sense of style.</p>
+            <a href="{% url 'product_list' %}"><button >Shop New</button></a>
+            
+            <div class="Brands">
+                <div class="Brands_1">
+                    <h1>200+</h1>
+                    <p>International Brands</p>
+                </div>
+                <div class="Brands_1">
+                    <h1>2,000+</h1>
+                    <p>High-Quality Products</p>
+                </div>
+                <div class="Brands_1">
+                    <h1>30,000+</h1>
+                    <p>Happy Customers</p>
+                </div>
+            </div>
+        </div>
+        <div class="hero_img">
+                {% if Settings.banner_image %}
+                    <img src="{{ Settings.banner_image.url }}" alt="Banner Image">
+                {% else %}
+                    <img src="{% static 'img/image_32e.jpg' %}" alt="Banner Image">
+                {% endif %}
+        </div>
+    </div>
+</section>
+<!-- __________________________________________________________ -->
+
+<section class="brand_section" id="brand_section">
+    <div>
+        <h1>Vector</h1>
+        <h1>zara</h1>
+        <h1>Guccl </h1>
+        <h1>prada </h1>
+        <h1>Calivn klein </h1>
+    </div>
+</section><br>
+<!-- __________________________________________________________ -->
+
+<section class="ARRIVALS">
+    <h2>NEW ARRIVALS</h2>
+<div class="product_ARRIVALs">
+    <!-- <div class="product-card">
+        <div class="product-image">
+            <img src="\static\img\download (1).jpeg" alt="${element.title}">
+            <div class="discount-badge">${el</div>
+            <button class="wishlist-btn" >
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </button>
+        </div>
+        <div class="product-details">
+            <h3 class="product-title">${element.title}</h3>
+            <h3 class="product-title">⭐⭐⭐⭐⭐</h3>
+            <p class="product-description">${element.description}</p>
+            <div class="price-container">
+                <span class="current-price">$${elemen}</span>
+                <span class="old-price">$${elemence}</span>
+            </div>
+        </div>
+    </div> -->
+</div>
+<div class="No_data"></div>
+<div class="view_all">
+    <a href="{% url 'product_list' %}"><button>View All</button></a>
+</div>
+</section>
+
+<!-- __________________________________________________________ -->
+
+<section class="top_selling">
+<h2>top selling</h2>
+<div class="product_selling">
+    <!-- <div class="product-card">
+        <div class="product-image">
+            <img src="\static\img\download (1).jpeg" alt="${element.title}">
+            <div class="discount-badge">${element.discount}</div>
+            <button class="wishlist-btn" onclick="toggleWishlist(this)">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </button>
+        </div>
+        <div class="product-details">
+            <h3 class="product-title">${element.title}</h3>
+            <h3 class="product-title">⭐⭐⭐⭐⭐</h3>
+            <p class="product-description">${element.description}</p>
+            <div class="price-container">
+                <span class="current-price">$${element.price}</span>
+                <span class="old-price">$${element.old_price}</span>
+            </div>
+        </div>
+    </div> -->
+</div>
+<div class="No_data"></div>
+<div class="view_all">
+    <a href="{% url 'product_list' %}"><button>View All</button></a>
+</div>
+</section>
+<section class="STYLE_ITEMs">
+    <h3>Choose a Style</h3>
+
+    <div class="Casual casual_1">
+        <a href="" class="img_1">
+            <div></div>
+        </a>
+        <a href="" class="img_2">
+            <div></div>
+        </a>
+    </div>
+    <br><br>
+    <div class="Casual casual_2">
+        <a href="" class="img_4">
+            <div></div>
+        </a>
+        <a href="" class="img_3">
+            <div></div>
+        </a>
+    </div>
+</section>
+
+<!-- =================================== -->
+<section class="Review_section">
+    <div class="Review_title">
+        <div class="contant">
+            OUR CUSTOMERS
+        </div>
+        <div class="buttons_Review">
+            <div><i class="bi bi-arrow-left"></i></div>
+            <div><i class="bi bi-arrow-right"></i></div>
+        </div>
+    </div>
+    <div class="all_Review">
+        <div class="Review">
+            <div class="user_Review">
+                safwane.<span class="span✔">✔</span> 
+            </div>
+            <div class="start_Review">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <p class="desctiption_Review">
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Consequuntur reiciendis quas a exercitationem tempora temporibus enim quo ducimus. Dignissimos iure rem ea totam soluta hic asperiores ex ducimus porro! Accusamus?
+            </p>
+            <div class="time_Review">
+                12/43/1000
+            </div>
+        </div>
+        <div class="Review">
+            <div class="user_Review">
+                safwane.<span class="span✔">✔</span> 
+            </div>
+            <div class="start_Review">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <p class="desctiption_Review">
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Consequuntur reiciendis quas a exercitationem tempora temporibus enim quo ducimus. Dignissimos iure rem ea totam soluta hic asperiores ex ducimus porro! Accusamus?
+            </p>
+            <div class="time_Review">
+                12/43/1000
+            </div>
+        </div>
+        <div class="Review">
+            <div class="user_Review">
+                safwane.<span class="span✔">✔</span> 
+            </div>
+            <div class="start_Review">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+            </div>
+            <p class="desctiption_Review">
+                Lorem ipsum dolor sit, amet consectetur adipisicing elit. Consequuntur reiciendis quas a exercitationem tempora temporibus enim quo ducimus. Dignissimos iure rem ea totam soluta hic asperiores ex ducimus porro! Accusamus?
+            </p>
+            <div class="time_Review">
+                12/43/1000
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{% static 'js/home.js' %}"></script>
+{% endblock %}
+

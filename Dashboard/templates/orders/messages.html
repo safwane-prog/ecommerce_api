@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - E-commerce Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style/Dashboard.css">
+    <link rel="stylesheet" href="/static/style/messages.css">
+    <link rel="stylesheet" href="/static/style/product.css">
+    <style>
+        .tab-nav li .count-badge {
+            background: #f5f5f9;
+            color: #555;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .tab-nav li.active .count-badge {
+            background: #e6e2ff;
+            color: #6c5ce7;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading-spinner.active {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6c5ce7;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 50%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .message-preview {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+            display: inline-block;
+        }
+        
+        .reply-form {
+            margin-top: 20px;
+        }
+        
+        .reply-form textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        
+        .reply-form button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .reply-form button:hover {
+            background: #5a4bc6;
+        }
+        
+        .replies-list {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+        
+        .reply-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 90%;
+                margin: 20% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>ShopAdmin</span>
+            </div>
+            <ul class="menu">
+                <li><a href="{% url 'Dashboard' %}"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                <li><a href="{% url 'product' %}"><i class="fas fa-box"></i><span>Products</span></a></li>
+                <li><a href="{% url 'orders' %}"><i class="fas fa-shopping-cart"></i><span>Orders</span></a></li>
+                <li><a href="{% url 'customers' %}"><i class="fas fa-users"></i><span>Customers</span></a></li>
+                <li class="active"><a href="{% url 'messages' %}"><i class="fas fa-envelope"></i><span>Messages</span></a></li>
+                <li><a href="{% url 'discounts' %}"><i class="fas fa-tag"></i><span>Discounts</span></a></li>
+                <li><a href="{% url 'settings' %}"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+                <li><a href="{% url 'Logout' %}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <div class="top-nav">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input id="search-subscribers" type="text" placeholder="Search messages...">
+                </div>
+                {% include "admin.html" %}
+            </div>
+
+            <!-- Messages Content -->
+            <div class="content">
+                <h1>Messages Center</h1>
+                <div class="messages-tabs">
+                    <ul class="tab-nav">
+                        <li class="active" data-tab="subscribers">
+                            <i class="fas fa-users"></i> Subscribers
+                            <span class="count-badge" id="subscribers-count">0</span>
+                        </li>
+                        <li data-tab="contacts">
+                            <i class="fas fa-envelope"></i> Contact Messages
+                            <span class="count-badge" id="contacts-count">0</span>
+                        </li>
+                        <li data-tab="reviews">
+                            <i class="fas fa-star"></i> Product Reviews
+                            <span class="count-badge" id="reviews-count">0</span>
+                        </li>
+                        <li data-tab="site-experience">
+                            <i class="fas fa-comment-alt"></i> Site Experience
+                            <span class="count-badge" id="site-experience-count">0</span>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <!-- Subscribers Tab -->
+                        <div class="tab-pane active" id="subscribers">
+                            <div class="tab-header">
+                                <h3>Email Subscribers <span id="subscribers-filter-count">(0)</span></h3>
+                                <div class="tab-actions">
+                                    <button class="btn-export"><i class="fas fa-download"></i> Export</button>
+                                </div>
+                            </div>
+                            <div class="loading-spinner" id="subscribers-loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table id="subscribers-table">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Subscription Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="pagination">
+                                <span id="subscribers-pagination-info">Showing 0 to 0 of 0 subscribers</span>
+                                <div class="pagination-controls" id="subscribers-pagination-controls"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Messages Tab -->
+                        <div class="tab-pane" id="contacts">
+                            <div class="tab-header">
+                                <h3>Customer Messages <span id="contacts-filter-count">(0)</span></h3>
+                                <div class="tab-actions">
+                                    <select class="filter-select" id="contacts-filter">
+                                        <option value="all">All Messages</option>
+                                        <option value="unread">Unread</option>
+                                        <option value="read">Read</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="loading-spinner" id="contacts-loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table id="contacts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Subject</th>
+                                        <th>Message</th>
+                                        <th>Date</th>
+                                        <th>Replies</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="pagination">
+                                <span id="contacts-pagination-info">Showing 0 to 0 of 0 messages</span>
+                                <div class="pagination-controls" id="contacts-pagination-controls"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Reviews Tab -->
+                        <div class="tab-pane" id="reviews">
+                            <div class="tab-header">
+                                <h3>Product Reviews <span id="reviews-filter-count">(0)</span></h3>
+                                <div class="tab-actions">
+                                    <select class="filter-select" id="reviews-filter">
+                                        <option value="all">All Reviews</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="loading-spinner" id="reviews-loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table id="reviews-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Rating</th>
+                                        <th>Review</th>
+                                        <th>Product</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="pagination">
+                                <span id="reviews-pagination-info">Showing 0 to 0 of 0 reviews</span>
+                                <div class="pagination-controls" id="reviews-pagination-controls"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Site Experience Reviews Tab -->
+                        <div class="tab-pane" id="site-experience">
+                            <div class="tab-header">
+                                <h3>Site Experience Reviews <span id="site-experience-filter-count">(0)</span></h3>
+                                <div class="tab-actions">
+                                    <select class="filter-select" id="site-experience-filter">
+                                        <option value="all">All Reviews</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="rejected">Rejected</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="loading-spinner" id="site-experience-loading">
+                                <div class="spinner"></div>
+                            </div>
+                            <table id="site-experience-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Rating</th>
+                                        <th>Comment</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                            <div class="pagination">
+                                <span id="site-experience-pagination-info">Showing 0 to 0 of 0 reviews</span>
+                                <div class="pagination-controls" id="site-experience-pagination-controls"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">×</span>
+            <h3>Message Details</h3>
+            <div class="message-details">
+                <p><strong>Name:</strong> <span id="modalName"></span></p>
+                <p><strong>Email:</strong> <span id="modalEmail"></span></p>
+                <p><strong>Phone:</strong> <span id="modalPhone"></span></p>
+                <p><strong>Subject:</strong> <span id="modalSubject"></span></p>
+                <p><strong>Date:</strong> <span id="modalDate"></span></p>
+                <p><strong>Message:</strong></p>
+                <div class="message-content" id="modalMessage"></div>
+                <div class="replies-list" id="modalReplies"></div>
+                <form class="reply-form" id="replyForm">
+                    <textarea id="replyText" placeholder="Write your reply..." required></textarea>
+                    <button type="submit">Send Reply</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+
+        const ITEMS_PER_PAGE = 10; // عدد العناصر في كل صفحة
+
+// دالة لإنشاء عناصر الـ Pagination
+function createPagination(totalItems, currentPage, tabId) {
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+    const controls = document.getElementById(`${tabId}-pagination-controls`);
+    controls.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    // زر الصفحة السابقة
+    controls.insertAdjacentHTML('beforeend', `
+        <button class="pagination-btn ${currentPage === 1 ? 'disabled' : ''}" 
+                onclick="changePage(${currentPage - 1}, '${tabId}')">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `);
+
+    // إظهار الصفحة الأولى
+    addPageButton(1, currentPage, tabId);
+
+    // إظهار النقاط إذا كانت الصفحة الحالية أكبر من 3
+    if (currentPage > 3) {
+        controls.insertAdjacentHTML('beforeend', '<span>...</span>');
+    }
+
+    // إظهار صفحتين قبل و بعد الصفحة الحالية
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i, currentPage, tabId);
+    }
+
+    // إظهار النقاط إذا كانت هناك صفحات متبقية
+    if (currentPage < totalPages - 2) {
+        controls.insertAdjacentHTML('beforeend', '<span>...</span>');
+    }
+
+    // إظهار الصفحة الأخيرة
+    if (totalPages > 1) {
+        addPageButton(totalPages, currentPage, tabId);
+    }
+
+    // زر الصفحة التالية
+    controls.insertAdjacentHTML('beforeend', `
+        <button class="pagination-btn ${currentPage === totalPages ? 'disabled' : ''}" 
+                onclick="changePage(${currentPage + 1}, '${tabId}')">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `);function addPageButton(page, currentPage, tabId) {
+    const controls = document.getElementById(`${tabId}-pagination-controls`);
+    controls.insertAdjacentHTML('beforeend', `
+        <button class="pagination-btn ${page === currentPage ? 'active' : ''}" 
+                onclick="changePage(${page}, '${tabId}')">
+            ${page}
+        </button>
+    `);
+}
+
+// دالة لتغيير الصفحة
+function changePage(page, tabId) {
+    if (page < 1) return;
+    loadTabData(tabId, page);
+}
+}
+function loadTabData(tabId, page = 1) {
+    const searchQuery = document.getElementById('search-subscribers').value;
+    switch(tabId) {
+        case 'subscribers': fetchSubscribers(page, searchQuery); break;
+        case 'contacts': fetchContacts(page, searchQuery); break;
+        case 'reviews': fetchReviews(page, searchQuery); break;
+        case 'site-experience': fetchSiteExperienceReviews(page, searchQuery); break;
+    }
+}
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabNavItems = document.querySelectorAll('.tab-nav li');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const modal = document.getElementById('messageModal');
+        const closeModal = document.querySelector('.close-modal');
+        
+        tabNavItems.forEach(item => {
+            item.addEventListener('click', function() {
+                tabNavItems.forEach(tab => tab.classList.remove('active'));
+                tabPanes.forEach(pane => pane.classList.remove('active'));
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                loadTabData(tabId);
+            });
+        });
+
+        closeModal.addEventListener('click', () => modal.style.display = 'none');
+        window.addEventListener('click', event => {
+            if (event.target === modal) modal.style.display = 'none';
+        });
+
+        loadTabData('subscribers');
+
+        function loadTabData(tabId) {
+            switch(tabId) {
+                case 'subscribers': fetchSubscribers(); break;
+                case 'contacts': fetchContacts(); break;
+                case 'reviews': fetchReviews(); break;
+                case 'site-experience': fetchSiteExperienceReviews(); break;
+            }
+        }
+
+        function fetchSubscribers() {
+            const loadingElement = document.getElementById('subscribers-loading');
+            loadingElement.classList.add('active');
+            fetch('/Board_api/subscribes/', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    renderSubscribers(data);
+                    updateCount('subscribers-count', data.length);
+                    updateCount('subscribers-filter-count', data.length);
+                    document.getElementById('subscribers-pagination-info').textContent = 
+                        `Showing 1 to ${data.length} of ${data.length} subscribers`;
+                    loadingElement.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error fetching subscribers:', error);
+                    loadingElement.classList.remove('active');
+                });
+        }
+
+        function renderSubscribers(subscribers) {
+            const tableBody = document.querySelector('#subscribers-table tbody');
+            tableBody.innerHTML = subscribers.length === 0 ? 
+                '<tr><td colspan="3">No subscribers found</td></tr>' : '';
+            
+            subscribers.forEach(subscriber => {
+                const date = new Date(subscriber.subscribed_at).toLocaleDateString();
+                const row = `
+                    <tr>
+                        <td>${subscriber.email}</td>
+                        <td>${date}</td>
+                        <td>
+                            <button class="btn-action delete" data-id="${subscriber.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.btn-action.delete').forEach(button => {
+                button.addEventListener('click', function() {
+                    const subscriberId = this.getAttribute('data-id');
+                    deleteSubscriber(subscriberId);
+                });
+            });
+        }
+
+        function deleteSubscriber(id) {
+            if (!confirm('Are you sure you want to delete this subscriber?')) return;
+            fetch(`/Board_api/subscribes/delete/${id}/`, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.ok) fetchSubscribers();
+                    else alert('Failed to delete subscriber');
+                })
+                .catch(error => {
+                    console.error('Error deleting subscriber:', error);
+                    alert('Error deleting subscriber');
+                });
+        }
+
+        function fetchContacts() {
+            const loadingElement = document.getElementById('contacts-loading');
+            loadingElement.classList.add('active');
+            fetch('/Board_api/contacts/', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    renderContacts(data);
+                    updateCount('contacts-count', data.length);
+                    updateCount('contacts-filter-count', data.length);
+                    document.getElementById('contacts-pagination-info').textContent = 
+                        `Showing 1 to ${data.length} of ${data.length} messages`;
+                    loadingElement.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error fetching contacts:', error);
+                    loadingElement.classList.remove('active');
+                });
+        }
+
+        function renderContacts(contacts) {
+            const tableBody = document.querySelector('#contacts-table tbody');
+            tableBody.innerHTML = contacts.length === 0 ? 
+                '<tr><td colspan="7">No messages found</td></tr>' : '';
+            
+            contacts.forEach(contact => {
+                const date = new Date(contact.created_at).toLocaleDateString();
+                const shortMessage = contact.message.length > 50 ? 
+                    contact.message.substring(0, 50) + '...' : contact.message;
+                const repliesCount = contact.replies ? contact.replies.length : 0;
+                const row = `
+                    <tr>
+                        <td>${contact.user ? contact.user.username : 'N/A'}</td>
+                        <td>${contact.user ? contact.user.email : 'N/A'}</td>
+                        <td>${contact.subject}</td>
+                        <td><span class="message-preview" title="${contact.message}">${shortMessage}</span></td>
+                        <td>${date}</td>
+                        <td>${repliesCount}</td>
+                        <td>
+                            <button class="btn-action view" data-id="${contact.id}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-action delete" data-id="${contact.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.btn-action.view').forEach(button => {
+                button.addEventListener('click', function() {
+                    const contactId = this.getAttribute('data-id');
+                    showContactDetails(contactId);
+                });
+            });
+
+            document.querySelectorAll('.btn-action.delete').forEach(button => {
+                button.addEventListener('click', function() {
+                    const contactId = this.getAttribute('data-id');
+                    deleteContact(contactId);
+                });
+            });
+        }
+
+        function showContactDetails(id) {
+            fetch(`/Board_api/contacts/${id}/`, { credentials: 'include' })
+                .then(response => response.json())
+                .then(contact => {
+                    document.getElementById('modalName').textContent = 
+                        contact.user ? contact.user.username : 'N/A';
+                    document.getElementById('modalEmail').textContent = 
+                        contact.user ? contact.user.email : 'N/A';
+                    document.getElementById('modalPhone').textContent = contact.phone || 'N/A';
+                    document.getElementById('modalSubject').textContent = contact.subject;
+                    document.getElementById('modalMessage').textContent = contact.message;
+                    document.getElementById('modalDate').textContent = 
+                        new Date(contact.created_at).toLocaleString();
+
+                    const repliesList = document.getElementById('modalReplies');
+                    repliesList.innerHTML = contact.replies.length > 0 ? '' : '<p>No replies yet.</p>';
+                    contact.replies.forEach(reply => {
+                        const replyItem = `
+                            <div class="reply-item">
+                                <p><strong>${reply.replied_by}:</strong> ${reply.reply}</p>
+                                <p><small>${new Date(reply.replied_at).toLocaleString()}</small></p>
+                            </div>
+                        `;
+                        repliesList.insertAdjacentHTML('beforeend', replyItem);
+                    });
+
+                    const replyForm = document.getElementById('replyForm');
+                    replyForm.onsubmit = (e) => {
+                        e.preventDefault();
+                        sendReply(id, document.getElementById('replyText').value);
+                    };
+
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error fetching contact details:', error);
+                    alert('Error loading message details');
+                });
+        }
+
+function sendReply(contactId, replyText) {
+    fetch('/Board_api/add-reply/', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contact_message: contactId,
+            reply: replyText,
+            replied_by: "Admin Safwane" // أو أي اسم المسؤول الذي يرد
+        })
+    })
+    .then(response => {
+        if (response.ok) {
+            document.getElementById('replyText').value = '';
+            showContactDetails(contactId);
+            fetchContacts();
+        } else {
+            alert('Failed to send reply');
+        }
+    })
+    .catch(error => {
+        console.error('Error sending reply:', error);
+        alert('Error sending reply');
+    });
+}
+
+
+        function deleteContact(id) {
+            if (!confirm('Are you sure you want to delete this message?')) return;
+            fetch(`/Board_api/contacts/${id}/`, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.ok) fetchContacts();
+                    else alert('Failed to delete message');
+                })
+                .catch(error => {
+                    console.error('Error deleting message:', error);
+                    alert('Error deleting message');
+                });
+        }
+
+        function fetchReviews() {
+            const loadingElement = document.getElementById('reviews-loading');
+            loadingElement.classList.add('active');
+            fetch('/Board_api/reviews/', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    renderReviews(data);
+                    updateCount('reviews-count', data.length);
+                    updateCount('reviews-filter-count', data.length);
+                    document.getElementById('reviews-pagination-info').textContent = 
+                        `Showing 1 to ${data.length} of ${data.length} reviews`;
+                    loadingElement.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error fetching reviews:', error);
+                    loadingElement.classList.remove('active');
+                });
+        }
+
+        function renderReviews(reviews) {
+            const tableBody = document.querySelector('#reviews-table tbody');
+            tableBody.innerHTML = reviews.length === 0 ? 
+                '<tr><td colspan="6">No reviews found</td></tr>' : '';
+            
+            reviews.forEach(review => {
+                const stars = Array(5).fill(0).map((_, i) => 
+                    i < review.rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'
+                ).join('');
+                const row = `
+                    <tr>
+                        <td>${review.user.username}</td>
+                        <td><div class="star-rating">${stars}</div></td>
+                        <td>${review.comment}</td>
+                        <td>${review.product.title}</td>
+                        <td>${new Date(review.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn-action delete" data-id="${review.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.btn-action.delete').forEach(button => {
+                button.addEventListener('click', function() {
+                    const reviewId = this.getAttribute('data-id');
+                    deleteReview(reviewId);
+                });
+            });
+        }
+
+        function deleteReview(id) {
+            if (!confirm('Are you sure you want to delete this review?')) return;
+            fetch(`/Board_api/reviews/delete/${id}/`, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.ok) fetchReviews();
+                    else alert('Failed to delete review');
+                })
+                .catch(error => {
+                    console.error('Error deleting review:', error);
+                    alert('Error deleting review');
+                });
+        }
+
+        function fetchSiteExperienceReviews() {
+            const loadingElement = document.getElementById('site-experience-loading');
+            loadingElement.classList.add('active');
+            fetch('/Board_api/site-experience-reviews/', { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    renderSiteExperienceReviews(data);
+                    updateCount('site-experience-count', data.length);
+                    updateCount('site-experience-filter-count', data.length);
+                    document.getElementById('site-experience-pagination-info').textContent = 
+                        `Showing 1 to ${data.length} of ${data.length} reviews`;
+                    loadingElement.classList.remove('active');
+                })
+                .catch(error => {
+                    console.error('Error fetching site experience reviews:', error);
+                    loadingElement.classList.remove('active');
+                });
+        }
+
+        function renderSiteExperienceReviews(reviews) {
+            const tableBody = document.querySelector('#site-experience-table tbody');
+            tableBody.innerHTML = reviews.length === 0 ? 
+                '<tr><td colspan="5">No site experience reviews found</td></tr>' : '';
+            
+            reviews.forEach(review => {
+                const stars = Array(5).fill(0).map((_, i) => 
+                    i < review.rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'
+                ).join('');
+                const row = `
+                    <tr>
+                        <td>${review.user.username}</td>
+                        <td><div class="star-rating">${stars}</div></td>
+                        <td>${review.comment}</td>
+                        <td>${new Date(review.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn-action delete" data-id="${review.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.btn-action.delete').forEach(button => {
+                button.addEventListener('click', function() {
+                    const reviewId = this.getAttribute('data-id');
+                    deleteSiteExperienceReview(reviewId);
+                });
+            });
+        }
+
+        function deleteSiteExperienceReview(id) {
+            if (!confirm('Are you sure you want to delete this site experience review?')) return;
+            fetch(`/Board_api/site-experience-reviews/delete/${id}/`, {
+                method: 'DELETE',
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (response.ok) fetchSiteExperienceReviews();
+                    else alert('Failed to delete site experience review');
+                })
+                .catch(error => {
+                    console.error('Error deleting site experience review:', error);
+                    alert('Error deleting site experience review');
+                });
+        }
+
+        function updateCount(elementId, count) {
+            const element = document.getElementById(elementId);
+            if (element) element.textContent = count;
+        }
+
+        document.querySelector('.btn-export')?.addEventListener('click', () => {
+            alert('Subscribers list exported successfully!');
+        });
+
+        document.getElementById('contacts-filter')?.addEventListener('change', fetchContacts);
+        document.getElementById('reviews-filter')?.addEventListener('change', fetchReviews);
+        document.getElementById('site-experience-filter')?.addEventListener('change', fetchSiteExperienceReviews);
+
+        document.getElementById('search-subscribers')?.addEventListener('input', function() {
+            const activeTab = document.querySelector('.tab-nav li.active').getAttribute('data-tab');
+            if (activeTab === 'subscribers') fetchSubscribers();
+            if (activeTab === 'contacts') fetchContacts();
+            if (activeTab === 'reviews') fetchReviews();
+            if (activeTab === 'site-experience') fetchSiteExperienceReviews();
+        });
+    });
+    </script>
+</body>
+</html>

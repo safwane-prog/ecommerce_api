@@ -1,0 +1,1783 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}My Account{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{% csrf_token %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
+{% block content %}
+<style>
+    /* Root Variables for Consistent Theming */
+    :root {
+        --primary: #2563eb;
+        --primary-dark: #1e40af;
+        --secondary: #10b981;
+        --error: #ef4444;
+        --background: #f9fafb;
+        --card-bg: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --border: #e5e7eb;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease-in-out;
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--background);
+        color: var(--text-primary);
+        line-height: 1.6;
+        font-size: 16px;
+    }
+
+    .container {
+        display: flex;
+        max-width: 1440px;
+        margin: 24px auto;
+        padding: 16px;
+        gap: 24px;
+        min-height: calc(100vh - 120px);
+    }
+
+    .loading-spinner {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid var(--primary);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        z-index: 1001;
+    }
+
+    @keyframes spin {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .sidebar {
+        width: 300px;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        display: flex;
+        flex-direction: column;
+        transition: var(--transition);
+    }
+
+    .sidebar:hover {
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-4px);
+    }
+
+    .profile-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .profile-picture {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 2px solid var(--border);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .profile-picture:hover {
+        transform: scale(1.05);
+    }
+
+    .profile-picture img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .user-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .user-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.4;
+    }
+
+    .user-email {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        word-break: break-all;
+    }
+
+    .nav-list {
+        list-style: none;
+        flex-grow: 1;
+        margin-top: 16px;
+    }
+
+    .nav-list li {
+        margin-bottom: 8px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 8px;
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .nav-link i {
+        margin-right: 12px;
+        font-size: 1.1rem;
+    }
+
+    .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--primary);
+        transform: translateX(4px);
+    }
+
+    .nav-link.active {
+        background: #dbeafe;
+        color: var(--primary);
+        font-weight: 600;
+        box-shadow: inset 0 0 0 2px var(--primary);
+    }
+
+    .logout-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px;
+        margin-top: auto;
+        background: var(--error);
+        border: none;
+        border-radius: 8px;
+        color: #ffffff;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+    }
+
+    .logout-btn:hover {
+        background: #dc2626;
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .logout-btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+    }
+
+    .logout-btn i {
+        margin-right: 8px;
+    }
+
+    .main-content {
+        flex: 1;
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+
+    .content-section {
+        display: none;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .content-section.active {
+        display: block;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .dashboard-card {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        border: 1px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .dashboard-card i {
+        font-size: 2rem;
+        color: var(--primary);
+        margin-bottom: 12px;
+    }
+
+    .dashboard-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 8px 0;
+    }
+
+    .dashboard-card p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+
+    .recent-activity {
+        background: #f9fafb;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid var(--border);
+    }
+
+    .recent-activity h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+    }
+
+    .profile-form {
+        max-width: 600px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 0.95rem;
+        background: #f9fafb;
+        transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .submit-btn {
+        background: var(--primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .submit-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .orders-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .order-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        transition: var(--transition);
+    }
+
+    .order-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        font-size: 0.95rem;
+    }
+
+    .order-status-paid {
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .order-status-pending {
+        color: #f59e0b;
+        font-weight: 500;
+    }
+
+    .order-date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-top: 8px;
+    }
+
+    .view-details-btn {
+        background: #f9fafb;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .view-details-btn:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+
+    .order-details {
+        display: none;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .order-details.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    .order-product {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #f1f3f5;
+    }
+
+    .order-product:last-child {
+        border-bottom: none;
+    }
+
+    .order-product img {
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-right: 12px;
+    }
+
+    .order-product-details {
+        flex: 1;
+    }
+
+    .order-product-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .order-product-price {
+        color: var(--secondary);
+        font-weight: 500;
+        margin-bottom: 6px;
+    }
+
+    .order-product-quantity {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .rate-product-btn {
+        background: var(--primary);
+        color: #ffffff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .rate-product-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .rate-product-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .wishlist-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .wishlist-item {
+        max-width: 300px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .wishlist-item:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-hover);
+    }
+
+    .wishlist-item img {
+        width: 100%;
+        height: 240px;
+        object-fit: cover;
+    }
+
+    .wishlist-item .title {
+        padding: 12px;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .wishlist-item .price {
+        padding: 0 12px;
+        color: var(--secondary);
+        font-weight: 500;
+    }
+
+    .wishlist-item .actions {
+        padding: 12px;
+        display: flex;
+        gap: 8px;
+    }
+
+    .wishlist-item .add-to-cart,
+    .wishlist-item .remove {
+        flex: 1;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .wishlist-item .add-to-cart {
+        background: var(--primary);
+        color: #ffffff;
+    }
+
+    .wishlist-item .add-to-cart:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    .wishlist-item .remove {
+        background: #fef2f2;
+        color: var(--error);
+    }
+
+    .wishlist-item .remove:hover {
+        background: var(--error);
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .reviews-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .review-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        transition: var(--transition);
+    }
+
+    .review-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .review-item h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+    }
+
+    .review-item .rating {
+        color: #f59e0b;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .review-item p {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .review-item .date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .messages-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .message-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px;
+        background: #f9fafb;
+        transition: var(--transition);
+    }
+
+    .message-item:hover {
+        box-shadow: var(--shadow-hover);
+    }
+
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .message-header h4 {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .message-date {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+    }
+
+    .message-content {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .message-replied-by {
+        font-size: 0.875rem;
+        color: var(--primary);
+        font-weight: 500;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        animation: fadeIn 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        max-width: 500px;
+        margin: 5% auto;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-hover);
+        position: relative;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+
+    .close-modal:hover {
+        color: var(--text-primary);
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+
+    .star {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #d1d5db;
+        transition: var(--transition);
+    }
+
+    .star.active,
+    .star:hover {
+        color: #f59e0b;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .cancel-btn {
+        background: #f9fafb;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .cancel-btn:hover {
+        background: var(--border);
+        transform: translateY(-2px);
+    }
+
+    .viewDetails {
+        cursor: pointer;
+    }
+
+    .notification {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+        animation: slideIn 0.3s ease;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .notification.success {
+        background: var(--secondary);
+    }
+
+    .notification.error {
+        background: var(--error);
+    }
+
+    .notification::before {
+        font-family: 'Font Awesome 5 Free';
+        font-weight: 900;
+        font-size: 1rem;
+    }
+
+    .notification.success::before {
+        content: '\f058';
+    }
+
+    .notification.error::before {
+        content: '\f06a';
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideIn {
+        from { transform: translateX(100%); }
+        to { transform: translateX(0); }
+    }
+
+    @keyframes slideOut {
+        from { transform: translateX(0); }
+        to { transform: translateX(100%); }
+    }
+
+    @media (max-width: 1024px) {
+        .container {
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .sidebar {
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        .profile-info {
+            flex-direction: row;
+            align-items: center;
+            text-align: left;
+            gap: 12px;
+        }
+
+        .profile-picture {
+            width: 48px;
+            height: 48px;
+        }
+
+        .user-name {
+            font-size: 1rem;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+        }
+
+        .nav-list {
+            display: flex;
+            overflow-x: auto;
+            gap: 12px;
+            padding-bottom: 12px;
+        }
+
+        .nav-link {
+            padding: 10px 12px;
+            font-size: 0.875rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid,
+        .wishlist-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+        }
+
+        .modal-content {
+            margin: 15% 16px;
+            padding: 20px;
+        }
+
+        .order-product {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .order-product img {
+            margin-bottom: 12px;
+        }
+
+        .rate-product-btn {
+            width: 100%;
+            margin-top: 12px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .container {
+            margin: 8px;
+            padding: 8px;
+        }
+
+        .sidebar,
+        .main-content {
+            padding: 16px;
+        }
+
+        .profile-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-picture {
+            margin-bottom: 12px;
+        }
+
+        .dashboard-card,
+        .order-item,
+        .wishlist-item,
+        .review-item,
+        .message-item {
+            padding: 12px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            padding: 10px;
+            font-size: 0.875rem;
+        }
+
+        .submit-btn,
+        .view-details-btn,
+        .rate-product-btn,
+        .cancel-btn {
+            padding: 10px 16px;
+            font-size: 0.875rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .nav-link {
+            font-size: 0.75rem;
+            padding: 8px 10px;
+        }
+
+        .nav-link i {
+            font-size: 0.875rem;
+        }
+
+        .logout-btn {
+            font-size: 0.875rem;
+            padding: 10px;
+        }
+    }
+</style>
+
+<div class="container" role="main">
+    <div class="loading-spinner" id="loading-spinner"></div>
+    <aside class="sidebar" aria-label="User Navigation">
+        <div class="profile-info">
+            <div class="profile-picture">
+                <img id="profile-picture" src="" alt="Profile Picture">
+            </div>
+            <div class="user-details">
+                <div id="user-name" class="user-name"></div>
+                <div id="user-email" class="user-email"></div>
+            </div>
+        </div>
+        <nav>
+            <ul class="nav-list">
+                <li><a href="#" class="nav-link active" data-section="dashboard" aria-current="page"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#" class="nav-link" data-section="profile"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="#" class="nav-link" data-section="orders"><i class="fas fa-box"></i> Orders</a></li>
+                <li><a href="#" class="nav-link" data-section="wishlist"><i class="fas fa-heart"></i>Wishlist</a></li>
+                <li><a href="#" class="nav-link" data-section="reviews"><i class="fas fa-star"></i>Reviews</a></li>
+                <li><a href="#" class="nav-link" data-section="messages"><i class="fas fa-envelope"></i> Messages</a></li>
+            </ul>
+        </nav>
+        <button class="logout-btn" onclick="logout()" aria-label="Logout">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+    </aside>
+
+    <main class="main-content">
+        <section id="dashboard" class="content-section active" aria-labelledby="dashboard-title">
+            <h2 id="dashboard-title" class="section-title">Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <i class="fas fa-box"></i>
+                    <h3 id="total-orders">0</h3>
+                    <p>Total Orders</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-heart"></i>
+                    <h3 id="wishlist-items">0</h3>
+                    <p>Wishlist Items</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-star"></i>
+                    <h3 id="reviews-count">0</h3>
+                    <p>Reviews Written</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-envelope"></i>
+                    <h3 id="messages-count">0</h3>
+                    <p>Messages</p>
+                </div>
+                <div class="dashboard-card">
+                    <i class="fas fa-dollar-sign"></i>
+                    <h3 id="total-spent">$0</h3>
+                    <p>Total Spent</p>
+                </div>
+            </div>
+            <div class="recent-activity">
+                <h3>Recent Activity</h3>
+                <div id="recent-orders" class="space-y-4"></div>
+            </div>
+        </section>
+
+        <section id="profile" class="content-section" aria-labelledby="profile-title">
+            <h2 id="profile-title" class="section-title">My Profile</h2>
+            <form id="profile-form" class="profile-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="profile-picture-upload">Profile Picture</label>
+                    <input type="file" id="profile-picture-upload" name="profile_picture" accept="image/*" aria-describedby="profile-picture-help">
+                    <small id="profile-picture-help" class="form-text">Upload a new profile picture (optional).</small>
+                </div>
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" name="first_name" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" name="last_name" aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required aria-required="true">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address">
+                </div>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </form>
+        </section>
+
+        <section id="orders" class="content-section" aria-labelledby="orders-title">
+            <h2 id="orders-title" class="section-title">My Orders</h2>
+            <div id="orders-list" class="orders-list"></div>
+        </section>
+
+        <section id="wishlist" class="content-section" aria-labelledby="wishlist-title">
+            <h2 id="wishlist-title" class="section-title">My Wishlist</h2>
+            <div id="wishlist-grid" class="wishlist-grid"></div>
+        </section>
+
+        <section id="reviews" class="content-section" aria-labelledby="reviews-title">
+            <h2 id="reviews-title" class="section-title">My Reviews</h2>
+            <div id="reviews-list" class="reviews-list"></div>
+        </section>
+
+        <section id="messages" class="content-section" aria-labelledby="messages-title">
+            <h2 id="messages-title" class="section-title">My Messages</h2>
+            <div id="messages-list" class="messages-list"></div>
+        </section>
+    </main>
+</div>
+
+<div id="rating-modal" class="modal" role="dialog" aria-labelledby="rating-product-title" aria-hidden="true">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeRatingModal()" aria-label="Close">×</span>
+        <h3 id="rating-product-title">Rate Product</h3>
+        <form id="rating-form">
+            <div class="form-group">
+                <label for="rating-value">Rating</label>
+                <div class="star-rating" id="star-rating" role="radiogroup" aria-label="Star Rating">
+                    <span class="star" data-rating="1" role="radio" aria-label="1 star" tabindex="0">★</span>
+                    <span class="star" data-rating="2" role="radio" aria-label="2 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="3" role="radio" aria-label="3 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="4" role="radio" aria-label="4 stars" tabindex="0">★</span>
+                    <span class="star" data-rating="5" role="radio" aria-label="5 stars" tabindex="0">★</span>
+                </div>
+                <input type="hidden" id="rating-value" value="0">
+                <input type="hidden" id="product-id" value="">
+            </div>
+            <div class="form-group">
+                <label for="review-comment">Comment</label>
+                <textarea id="review-comment" rows="5" placeholder="Write your comment here..." required aria-required="true"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeRatingModal()" class="cancel-btn">Cancel</button>
+                <button type="submit" class="submit-btn">Submit Review</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Global variables
+let userReviews = [];
+let userMessages = [];
+let adminReplies = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const userStatus = await checkUserStatus();
+        if (!userStatus) return;
+        
+        const [userData, repliesData] = await Promise.all([
+            fetchUserProfile(),
+            fetchAdminReplies()
+        ]);
+        updateUI(userData);
+        adminReplies = repliesData;
+        setupEventListeners();
+        toggleLoadingState(false);
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('Failed to initialize the page. Please try again.', 'error');
+    }
+});
+
+function toggleLoadingState(isLoading) {
+    const mainContent = document.querySelector('.main-content');
+    const spinner = document.getElementById('loading-spinner');
+    if (isLoading) {
+        if (mainContent) {
+            mainContent.style.opacity = '0.5';
+            mainContent.style.pointerEvents = 'none';
+        }
+        spinner.style.display = 'block';
+    } else {
+        if (mainContent) {
+            mainContent.style.opacity = '1';
+            mainContent.style.pointerEvents = 'auto';
+        }
+        spinner.style.display = 'none';
+    }
+}
+
+function getCsrfToken() {
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) return metaTag.getAttribute('content');
+    return document.cookie.match('(^|;)\\s*csrftoken\\s*=\\s*([^;]+)')?.pop() || '';
+}
+
+function getAccessToken() {
+    return getCookie('access_token') || '';
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    return parts.length === 2 ? parts.pop().split(';').shift() : '';
+}
+
+function clearAuthData() {
+    document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+}
+
+async function checkUserStatus() {
+    try {
+        const response = await fetch('/api/users/status/', {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            const refreshed = await tryRefreshToken();
+            if (refreshed) return await checkUserStatus();
+            throw new Error('Authentication failed');
+        }
+        
+        if (!response.ok) throw new Error('Failed to check user status');
+        return await response.json();
+    } catch (error) {
+        console.error('Error checking user status:', error);
+        clearAuthData();
+        showNotification('Please log in to continue.', 'error');
+        setTimeout(() => window.location.href = '/login/', 2000);
+        return null;
+    }
+}
+
+async function tryRefreshToken() {
+    try {
+        const response = await fetch('/api/users/token/refresh/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) throw new Error('Failed to refresh token');
+        const data = await response.json();
+        document.cookie = `access_token=${data.access}; path=/; SameSite=Lax; ${!window.location.hostname.includes('localhost') ? 'Secure' : ''}`;
+        document.cookie = `refresh_token=${data.refresh}; path=/; SameSite=Lax; ${!window.location.hostname.includes('localhost') ? 'Secure' : ''}`;
+        return true;
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+        showNotification('Session expired. Please log in again.', 'error');
+        setTimeout(() => window.location.href = '/login/', 2000);
+        return false;
+    }
+}
+
+async function fetchUserProfile() {
+    toggleLoadingState(true);
+    try {
+        const response = await fetch('/api/users/my-complete-data/', {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await fetchUserProfile();
+        }
+        
+        if (!response.ok) throw new Error('Failed to fetch profile data');
+        return await response.json();
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+async function fetchAdminReplies() {
+    try {
+        const response = await fetch('/api/admin-replies/', {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await fetchAdminReplies();
+        }
+        
+        if (!response.ok) throw new Error('Failed to fetch admin replies');
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching admin replies:', error);
+        return [];
+    }
+}
+
+function updateUI(userData) {
+    // Adapt new API data structure to existing UI logic
+    userReviews = userData.reviews || [];
+    userMessages = userData.contacts || [];
+    
+    // Combine user and profile data for compatibility
+    const adaptedUserData = {
+        ...userData.user,
+        profile: userData.profile || {},
+        orders: userData.orders || [],
+        wishlist: userData.wishlists?.map(item => ({
+            id: item.id,
+            product: {
+                id: item.product.id,
+                title: item.product.title,
+                price: item.product.price,
+                image_1: item.product.image_1 || '/static/images/placeholder.png'
+            }
+        })) || [],
+        reviews: userData.reviews || [],
+        contacts: userData.contacts || []
+    };
+    
+    document.getElementById('profile-picture').src = adaptedUserData.profile_picture || '/static/profile_pictures/default.png';
+    document.getElementById('user-name').textContent = adaptedUserData.profile ? `${adaptedUserData.profile.first_name} ${adaptedUserData.profile.last_name}`.trim() : adaptedUserData.username;
+    document.getElementById('user-email').textContent = adaptedUserData.email;
+
+    document.getElementById('total-orders').textContent = adaptedUserData.orders.length;
+    document.getElementById('wishlist-items').textContent = adaptedUserData.wishlist.length;
+    document.getElementById('reviews-count').textContent = adaptedUserData.reviews.length;
+    document.getElementById('messages-count').textContent = userMessages.length;
+    document.getElementById('total-spent').textContent = `$${calculateTotalSpent(adaptedUserData.orders)}`;
+
+    populateRecentOrders(adaptedUserData.orders.slice(0, 3));
+    populateProfileForm(adaptedUserData);
+    populateOrders(adaptedUserData.orders, adaptedUserData.reviews);
+    populateWishlist(adaptedUserData.wishlist);
+    populateReviews(adaptedUserData.reviews);
+    populateMessages(userMessages);
+}
+
+function calculateTotalSpent(orders) {
+    return orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0).toFixed(2);
+}
+
+function populateRecentOrders(orders) {
+    const container = document.getElementById('recent-orders');
+    container.innerHTML = orders.length === 0 ? '<p>No recent orders.</p>' : '';
+    
+    orders.forEach(order => {
+        const orderElement = document.createElement('div');
+        orderElement.className = 'order-item';
+        orderElement.innerHTML = `
+            <div class="order-header">
+                <span>Order #${order.id}</span>
+                <span class="order-status-${order.is_paid ? 'paid' : 'pending'}">${order.is_paid ? 'Paid' : 'Pending'}</span>
+            </div>
+            <p class="order-date">Ordered on ${new Date(order.created_at).toLocaleDateString('en-US')}</p>
+        `;
+        container.appendChild(orderElement);
+    });
+}
+
+function populateProfileForm(userData) {
+    document.getElementById('firstName').value = userData.profile?.first_name || '';
+    document.getElementById('lastName').value = userData.profile?.last_name || '';
+    document.getElementById('email').value = userData.email || '';
+    document.getElementById('phone').value = userData.profile?.phone || '';
+    document.getElementById('address').value = userData.profile?.address || '';
+}
+
+function populateOrders(orders, reviews) {
+    const container = document.getElementById('orders-list');
+    container.innerHTML = orders.length === 0 ? '<p>No orders found.</p>' : '';
+    
+    orders.forEach(order => {
+        const orderElement = document.createElement('div');
+        orderElement.className = 'order-item';
+        orderElement.innerHTML = `
+            <div class="order-header">
+                <span>Order #${order.id}</span>
+                <span class="order-status-${order.is_paid ? 'paid' : 'pending'}">${order.is_paid ? 'Paid' : 'Pending'}</span>
+            </div>
+            <div>
+                <span>Order Date:</span>
+                <strong>${new Date(order.created_at).toLocaleDateString('en-US')}</strong>
+            </div>
+            <div>
+                <span>Total Amount:</span>
+                <strong>$${parseFloat(order.total_price || 0).toFixed(2)}</strong>
+            </div>
+            <button class="view-details-btn" onclick="toggleOrderDetails(${order.id})">View Details</button>
+            <div id="order-details-${order.id}" class="order-details">
+                ${order.items?.length > 0 ? 
+                    order.items.map(item => createOrderItemHTML(item, reviews)).join('') : 
+                    '<p>No items in this order.</p>'}
+            </div>
+        `;
+        container.appendChild(orderElement);
+    });
+}
+
+function createOrderItemHTML(item, reviews) {
+    const hasReview = userReviews.some(review => review.product.id === item.product.id);
+    
+    return `
+        <div class="order-product">
+            <img src="${item.product.image_1 || '/static/images/placeholder.png'}" alt="${item.product.title}">
+            <div class="order-product-details">
+                <div class="order-product-title">${item.product.title}</div>
+                <div class="order-product-price">$${parseFloat(item.product.price || 0).toFixed(2)}</div>
+                <div class="order-product-quantity">Quantity: ${item.quantity}</div>
+            </div>
+            <button class="rate-product-btn" 
+                    onclick="openRatingModal(${item.product.id}, '${item.product.title.replace(/'/g, "\\'")}')" 
+                    ${hasReview ? 'disabled aria-disabled="true"' : ''}>
+                ${hasReview ? 'Reviewed' : 'Add Review'}
+            </button>
+        </div>
+    `;
+}
+
+function populateWishlist(wishlist) {
+    const container = document.getElementById('wishlist-grid');
+    container.innerHTML = wishlist.length === 0 ? '<p>Your wishlist is empty.</p>' : '';
+    
+    wishlist.forEach(item => {
+        const wishlistItem = document.createElement('div');
+        wishlistItem.className = 'wishlist-item';
+        wishlistItem.innerHTML = `
+            <img class="viewDetails" onclick="viewDetails(${item.product.id})" src="${item.product.image_1 || '/static/images/placeholder.png'}" alt="${item.product.title}">
+            <div class="title">${item.product.title}</div>
+            <div class="price">$${parseFloat(item.product.price || 0).toFixed(2)}</div>
+            <div class="actions">
+                <button class="add-to-cart" onclick="addToCart(${item.product.id})">Add to Cart</button>
+                <button class="remove" onclick="removeFromWishlist(${item.product.id}, this)">Remove</button>
+            </div>
+        `;
+        container.appendChild(wishlistItem);
+    });
+}
+
+function viewDetails(productId) {
+    window.location.href = `/product-detail.html?id=${productId}`;
+}
+
+function populateReviews(reviews) {
+    const container = document.getElementById('reviews-list');
+    container.innerHTML = reviews.length === 0 ? '<p>No reviews yet.</p>' : '';
+    
+    reviews.forEach(review => {
+        const reviewItem = document.createElement('div');
+        reviewItem.className = 'review-item';
+        reviewItem.innerHTML = `
+            <h4>${review.product.title}</h4>
+            <div class="rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+            <p>${review.comment || 'No comment provided.'}</p>
+            <div class="date">Reviewed on ${new Date(review.created_at).toLocaleDateString('en-US')}</div>
+        `;
+        container.appendChild(reviewItem);
+    });
+}
+
+function populateMessages(messages) {
+    const container = document.getElementById('messages-list');
+    container.innerHTML = messages.length === 0 ? '<p>No messages yet.</p>' : '';
+    
+    messages.forEach(message => {
+        const messageItem = document.createElement('div');
+        messageItem.className = 'message-item';
+        const replies = adminReplies.filter(reply => reply.contact_message === message.id);
+        
+        messageItem.innerHTML = `
+            <div class="message-header">
+                <h4>${message.subject}</h4>
+                <div class="message-date">Sent on ${new Date(message.created_at).toLocaleDateString('en-US')}</div>
+            </div>
+            <p class="message-content">${message.message || 'No message content provided.'}</p>
+            ${replies.length > 0 ? 
+                replies.map(reply => `
+                    <div class="message-content">Reply: ${reply.reply}</div>
+                    <div class="message-replied-by">Replied by: ${reply.replied_by} on ${new Date(reply.replied_at).toLocaleDateString('en-US')}</div>
+                `).join('') : 
+                '<div class="message-replied-by">No replies yet.</div>'}
+        `;
+        container.appendChild(messageItem);
+    });
+}
+
+function setupEventListeners() {
+    document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
+    document.getElementById('rating-form').addEventListener('submit', handleRatingSubmission);
+    
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', handleNavigation);
+    });
+    
+    document.querySelectorAll('.star').forEach(star => {
+        star.addEventListener('click', handleStarClick);
+        star.addEventListener('mouseover', handleStarHover);
+        star.addEventListener('mouseout', handleStarMouseOut);
+        star.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') handleStarClick(e);
+        });
+    });
+    
+    window.addEventListener('click', event => {
+        const modal = document.getElementById('rating-modal');
+        if (event.target === modal) closeRatingModal();
+    });
+    
+    document.getElementById('profile-picture-upload').addEventListener('change', previewProfilePicture);
+}
+
+function previewProfilePicture(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = e => document.getElementById('profile-picture').src = e.target.result;
+        reader.readAsDataURL(file);
+    }
+}
+
+function handleStarClick(e) {
+    const rating = parseInt(e.target.getAttribute('data-rating'));
+    document.getElementById('rating-value').value = rating;
+    updateStarDisplay(rating);
+}
+
+function handleStarHover(e) {
+    const rating = parseInt(e.target.getAttribute('data-rating'));
+    updateStarDisplay(rating, true);
+}
+
+function handleStarMouseOut() {
+    const currentRating = parseInt(document.getElementById('rating-value').value);
+    updateStarDisplay(currentRating);
+}
+
+function updateStarDisplay(rating, isHover = false) {
+    const stars = document.querySelectorAll('.star');
+    stars.forEach((star, index) => {
+        if (index < rating) {
+            star.classList.add(isHover ? 'hover' : 'active');
+            star.classList.remove(isHover ? 'active' : 'hover');
+            star.setAttribute('aria-checked', !isHover);
+        } else {
+            star.classList.remove('active', 'hover');
+            star.setAttribute('aria-checked', 'false');
+        }
+    });
+}
+
+async function openRatingModal(productId, productTitle) {
+    try {
+        const response = await fetch(`/api/reviews/check/${productId}/`, {
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await openRatingModal(productId, productTitle);
+        }
+        
+        const data = await response.json();
+        if (data.has_reviewed) {
+            showNotification('You have already reviewed this product.', 'error');
+            return;
+        }
+        
+        document.getElementById('product-id').value = productId;
+        document.getElementById('rating-product-title').textContent = `Rate: ${productTitle}`;
+        document.getElementById('rating-value').value = 0;
+        document.getElementById('review-comment').value = '';
+        updateStarDisplay(0);
+        
+        document.getElementById('rating-modal').style.display = 'block';
+        document.getElementById('rating-modal').setAttribute('aria-hidden', 'false');
+        document.querySelector('.star[data-rating="1"]').focus();
+    } catch (error) {
+        console.error('Error checking review status:', error);
+        showNotification('Failed to check review status. Please try again.', 'error');
+    }
+}
+
+function closeRatingModal() {
+    document.getElementById('rating-modal').style.display = 'none';
+    document.getElementById('rating-modal').setAttribute('aria-hidden', 'true');
+}
+
+async function handleRatingSubmission(e) {
+    e.preventDefault();
+    toggleLoadingState(true);
+    
+    const productId = parseInt(document.getElementById('product-id').value);
+    const rating = parseInt(document.getElementById('rating-value').value);
+    const comment = document.getElementById('review-comment').value.trim();
+    
+    if (rating === 0) {
+        showNotification('Please select a rating.', 'error');
+        toggleLoadingState(false);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/reviews/submit/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'X-CSRFToken': getCsrfToken()
+            },
+            credentials: 'include',
+            body: JSON.stringify({ rating, comment })
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await handleRatingSubmission(e);
+        }
+        
+        const data = await response.json();
+        if (response.ok) {
+            showNotification('Review submitted successfully.', 'success');
+            userReviews.push({
+                product: {
+                    id: productId,
+                    title: document.getElementById('rating-product-title').textContent.replace('Rate: ', '')
+                },
+                rating,
+                comment,
+                created_at: new Date().toISOString()
+            });
+            
+            document.querySelectorAll(`button[onclick*="${productId}"]`).forEach(button => {
+                if (button.textContent.includes('Add Review')) {
+                    button.disabled = true;
+                    button.setAttribute('aria-disabled', 'true');
+                    button.textContent = 'Reviewed';
+                }
+            });
+            
+            document.getElementById('reviews-count').textContent = parseInt(document.getElementById('reviews-count').textContent) + 1;
+            populateReviews(userReviews);
+            closeRatingModal();
+        } else {
+            showNotification(data.detail || 'Failed to submit review.', 'error');
+        }
+    } catch (error) {
+        console.error('Error submitting review:', error);
+        showNotification('Failed to submit review. Please try again.', 'error');
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+async function handleProfileUpdate(e) {
+    e.preventDefault();
+    toggleLoadingState(true);
+    
+    const profilePicture = document.getElementById('profile-picture-upload').files[0];
+    const profileData = {
+        first_name: document.getElementById('firstName').value,
+        last_name: document.getElementById('lastName').value,
+        phone: document.getElementById('phone').value || '',
+        address: document.getElementById('address').value || ''
+    };
+
+    try {
+        const profileResponse = await fetch('/api/users/me/', {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${getAccessToken()}`,
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            credentials: 'include',
+            body: JSON.stringify(profileData)
+        });
+        
+        if (profileResponse.status === 401) {
+            await tryRefreshToken();
+            return await handleProfileUpdate(e);
+        }
+        
+        if (!profileResponse.ok) {
+            const data = await profileResponse.json();
+            showNotification(data.detail || 'Failed to update profile. Please check your input.', 'error');
+            toggleLoadingState(false);
+            return;
+        }
+
+        if (profilePicture) {
+            const pictureFormData = new FormData();
+            pictureFormData.append('profile_picture', profilePicture);
+            
+            const pictureResponse = await fetch('/api/users/update-profile-picture/', {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${getAccessToken()}`,
+                    'X-CSRFToken': getCsrfToken()
+                },
+                credentials: 'include',
+                body: pictureFormData
+            });
+            
+            if (pictureResponse.status === 401) {
+                await tryRefreshToken();
+                return await handleProfileUpdate(e);
+            }
+            
+            if (!pictureResponse.ok) {
+                const data = await pictureResponse.json();
+                showNotification(data.detail || 'Failed to update profile picture.', 'error');
+                toggleLoadingState(false);
+                return;
+            }
+        }
+        
+        showNotification('Profile updated successfully!', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showNotification('Failed to update profile. Please try again.', 'error');
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+function handleNavigation(e) {
+    e.preventDefault();
+    document.querySelectorAll('.nav-link').forEach(nav => {
+        nav.classList.remove('active');
+        nav.removeAttribute('aria-current');
+    });
+    this.classList.add('active');
+    this.setAttribute('aria-current', 'page');
+    
+    const sectionId = this.getAttribute('data-section');
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+        section.setAttribute('aria-hidden', 'true');
+    });
+    const activeSection = document.getElementById(sectionId);
+    activeSection.classList.add('active');
+    activeSection.setAttribute('aria-hidden', 'false');
+}
+
+async function logout() {
+    toggleLoadingState(true);
+    try {
+        const response = await fetch('/api/users/logout/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Authorization': `Bearer ${getAccessToken()}`
+            },
+            credentials: 'include',
+            body: JSON.stringify({})
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await logout();
+        }
+        
+        if (response.ok) {
+            showNotification('Logout successful! Redirecting to login...', 'success');
+            clearAuthData();
+            setTimeout(() => window.location.href = '/login/', 2000);
+        } else {
+            const data = await response.json();
+            showNotification(data.detail || 'Logout failed. Please try again.', 'error');
+        }
+    } catch (error) {
+        console.error('Error during logout:', error);
+        showNotification('An error occurred during logout. Please try again.', 'error');
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+async function addToCart(productId) {
+    toggleLoadingState(true);
+    try {
+        const response = await fetch('/api/add-to-cart/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Authorization': `Bearer ${getAccessToken()}`
+            },
+            credentials: 'include',
+            body: JSON.stringify({ product_id: productId, quantity: 1 })
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await addToCart(productId);
+        }
+        
+        if (response.ok) {
+            showNotification('Product added to cart successfully.', 'success');
+        } else {
+            throw new Error('Failed to add to cart');
+        }
+    } catch (error) {
+        console.error('Error adding product to cart:', error);
+        showNotification('Failed to add product to cart.', 'error');
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+async function removeFromWishlist(productId, buttonElement) {
+    toggleLoadingState(true);
+    try {
+        const response = await fetch(`/api/wishlist/delete/${productId}/`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'Authorization': `Bearer ${getAccessToken()}`
+            },
+            credentials: 'include'
+        });
+        
+        if (response.status === 401) {
+            await tryRefreshToken();
+            return await removeFromWishlist(productId, buttonElement);
+        }
+        
+        if (response.ok) {
+            buttonElement.closest('.wishlist-item').remove();
+            showNotification('Product removed from wishlist.', 'success');
+            document.getElementById('wishlist-items').textContent = parseInt(document.getElementById('wishlist-items').textContent) - 1;
+        } else {
+            throw new Error('Failed to remove from wishlist');
+        }
+    } catch (error) {
+        console.error('Error removing from wishlist:', error);
+        showNotification('Failed to remove product from wishlist.', 'error');
+    } finally {
+        toggleLoadingState(false);
+    }
+}
+
+function toggleOrderDetails(orderId) {
+    const detailsSection = document.getElementById(`order-details-${orderId}`);
+    detailsSection.classList.toggle('active');
+    const button = event.target;
+    button.textContent = detailsSection.classList.contains('active') ? 'Hide Details' : 'View Details';
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'alert');
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

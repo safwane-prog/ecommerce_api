@@ -1,0 +1,103 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block title %}Product Details{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/product_detail.css' %}">
+
+<div class="breadcrumb">
+    <a href="{% url 'home' %}">Home</a> > <a href="{% url 'product_list' %}">Shop</a> > <a href="{% url 'view_cart' %}">Cart</a>
+</div>
+<div class="modal" id="authModal">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeAuthModal()"><i class="fa-solid fa-times"></i></button>
+        <h3>Please Sign In</h3>
+        <p>You need to be logged in to add items to your cart or wishlist.</p>
+        <div class="modal-actions">
+            <a href="{% url 'loginpage' %}" class="login-btn">Login</a>
+            <a href="{% url 'registerpage' %}" class="register-btn">Register</a>
+        </div> 
+    </div> 
+</div>
+<main class="main-content">
+    <div class="product-images">
+        <div class="thumbnail-list">
+            <div id="main-Image-1-2" class="thumbnail active">
+                <img id="mainImage1_2" src="" alt="">
+            </div>
+            <div id="main-Image-2-2" class="thumbnail">
+                <img id="mainImage2" src="" alt="">
+            </div>
+            <div id="main-Image-3-2" class="thumbnail">
+                <img id="mainImage3" src="" alt="">
+            </div>
+            <div id="main-Image-4-2" class="thumbnail">
+                <img id="mainImage4" src="" alt="">
+            </div>
+        </div>
+        <div class="main-image">
+            <img id="mainImage" src="" alt="ONE LIFE GRAPHIC T-SHIRT">
+        </div>
+    </div>
+
+    <div class="product-info">
+        <h1 id="product-title">ONE LIFE GRAPHIC T-SHIRT</h1>
+        <div class="rating" id="product-rating">
+            <div class="stars">★★★★☆</div>
+            <span>4.5/5</span>
+        </div>
+        <div class="price" id="product-price">
+            <span class="current-price">$260</span>
+            <span class="original-price">$300</span>
+            <span class="discount">-40%</span>
+        </div>
+        <p class="description" id="product-description">
+            This graphic t-shirt which is perfect for any occasion. Crafted from a soft and breathable fabric, it offers superior comfort and style.
+        </p>
+
+        <div class="color-selection">
+            <h3>Product Color</h3>
+            <div class="color-options" id="color-options"></div>
+        </div>
+
+        <div class="size-selection">
+            <h3>Product Size</h3>
+            <div class="size-options" id="size-options"></div>
+        </div>
+
+            <div class="quantity-cart">
+                <div class="quantity-selector">
+                <div class="quantity-controls">
+                    <button class="quantity-btn minus-btn" data-product-id="">-</button>
+                    <span id="quantity">1</span>
+                    <button class="quantity-btn plus-btn" data-product-id="">+</button>
+                    <div class="quantity-loader" style="display: none;"></div>
+                    </div>
+                    <!-- View Cart button will be dynamically added near quantity-controls -->
+                </div>
+                <button id="add-to-cart-btn" data-product-id="">Add to Cart</button>
+            </div>
+    </div>
+</main>
+
+<section class="product-tabs">
+    <div class="tab-buttons">
+        <button class="tab-button active">Rating & Reviews</button>
+    </div>
+
+    <div class="reviews-section" id="reviews-section">
+        <div class="reviews-header">
+            <h2>All Reviews (<span id="review-count">0</span>)</h2>
+            <div id="reviews-pagination" class="pagination"></div>
+        </div>
+        <div class="reviews-container" id="reviews-container"></div>
+    </div>
+</section>
+
+<section class="related-products">
+    <h2>YOU MIGHT ALSO LIKE</h2>
+    <div class="products-grid" id="related-products"></div>
+
+</section>
+
+<script src="{% static 'js/product_detail.js' %}"></script>
+{% endblock %}

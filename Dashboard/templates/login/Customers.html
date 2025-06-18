@@ -1,0 +1,1248 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customers | E-commerce Dashboard</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'style/settings.css' %}">
+    <link rel="stylesheet" href="{% static 'style/Dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'style/product.css' %}">
+    <link rel="stylesheet" href="{% static 'style/customers.css' %}">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            flex: 1;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn-cancel, .btn-save, .btn-confirm-delete {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .btn-save, .btn-confirm-delete {
+            background: #007bff;
+            color: white;
+        }
+        .btn-confirm-delete {
+            background: #dc3545;
+        }
+        #result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .delete-confirm-modal .modal-content {
+            width: 400px;
+            text-align: center;
+        }
+        .delete-confirm-modal .customer-summary {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .delete-confirm-modal .customer-summary img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 10px;
+        }
+        .delete-confirm-modal .customer-info {
+            margin-bottom: 10px;
+        }
+        .delete-confirm-modal .customer-info h4 {
+            margin: 5px 0;
+            font-size: 18px;
+        }
+        .delete-confirm-modal .customer-info span {
+            color: #666;
+            font-size: 14px;
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination-controls .btn-pagination {
+            padding: 8px 12px;
+            margin: 0 4px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination-controls .btn-pagination.active {
+            background: #6c5ce7;
+            color: white;
+            border-color: #6c5ce7;
+        }
+        .pagination-controls .prev-next {
+            font-weight: bold;
+        }
+        .pagination-ellipsis {
+            padding: 8px 12px;
+            margin: 0 4px;
+            color: #666;
+        }
+        .customer-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .wishlist-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .wishlist-item {
+            width: 120px;
+            text-align: center;
+        }
+        .wishlist-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .wishlist-item span {
+            display: block;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .table-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .table-loader i {
+            margin-right: 10px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>ShopAdmin</span>
+            </div>
+            <ul class="menu">
+                <li><a href="{% url 'Dashboard' %}"><i class="fas fa-home"></i><span>Dashboard</span></a></li>
+                <li><a href="{% url 'product' %}"><i class="fas fa-box"></i><span>Products</span></a></li>
+                <li><a href="{% url 'orders' %}"><i class="fas fa-shopping-cart"></i><span>Orders</span></a></li>
+                <li class="active"><a href="{% url 'customers' %}"><i class="fas fa-users"></i><span>Customers</span></a></li>
+                <li><a href="{% url 'messages' %}"><i class="fas fa-envelope"></i><span>Messages</span></a></li>
+                <li><a href="{% url 'discounts' %}"><i class="fas fa-tag"></i><span>Discounts</span></a></li>
+                <li><a href="{% url 'settings' %}"><i class="fas fa-cog"></i><span>Settings</span></a></li>
+                <li><a href="{% url 'Logout' %}"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a></li>
+            </ul>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <div class="top-nav">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="liveSearch" placeholder="Search customers by name, email, or ID...">
+                    <div class="search-loader" id="searchLoader" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                </div>
+                {% include "admin.html" %}
+            </div>
+
+            <!-- Customers Content -->
+            <div class="content">
+                <div class="page-header">
+                    <h1>Customer Management</h1>
+                    <div class="header-actions">
+                        <button class="btn-add-customer" id="addCustomerBtn"><i class="fas fa-plus"></i> Add Customer</button>
+                    </div>
+                </div>
+                
+                <!-- Customer Filters -->
+                <div class="customer-filters">
+                    <div class="filter-group">
+                        <label for="customer-date">Date Range:</label>
+                        <select id="customer-date">
+                            <option value="">All Time</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="order-count">Order Count:</label>
+                        <select id="order-count">
+                            <option value="">All</option>
+                            <option value="0">No Orders</option>
+                            <option value="1-5">1-5 Orders</option>
+                            <option value="6-10">6-10 Orders</option>
+                            <option value="10+">10+ Orders</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="total-spent">Total Spent:</label>
+                        <select id="total-spent">
+                            <option value="">All</option>
+                            <option value="0-50">$0 - $50</option>
+                            <option value="51-100">$51 - $100</option>
+                            <option value="101-500">$101 - $500</option>
+                            <option value="500+">$500+</option>
+                        </select>
+                    </div>
+                    <button class="btn-apply" id="applyFilters">Apply Filters</button>
+                    <button class="btn-reset" id="resetFilters">Reset</button>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div class="loading-container" id="loadingContainer" style="display: none;">
+                    <div class="loader">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+
+                <!-- No Results Message -->
+                <div class="no-results" id="noResults" style="display: none;">
+                    <div class="no-results-content">
+                        <i class="fas fa-users-slash"></i>
+                        <h3>No customers found</h3>
+                        <p>Try adjusting your search or filter criteria</p>
+                    </div>
+                </div>
+                
+                <!-- Customers Table -->
+                <div class="customers-table" id="customersTable">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="checkbox-col"><input type="checkbox" id="selectAllCustomers"></th>
+                                <th>Customer</th>
+                                <th>Email</th>
+                                <th>Location</th>
+                                <th>Orders</th>
+                                <th>Total Spent</th>
+                                <th>Last Order</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customersTableBody">
+                            <tr class="table-loading" id="tableLoading" style="display: none;">
+                                <td colspan="9" style="text-align: center;">
+                                    <div class="table-loader">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Bulk Actions -->
+                     <div class="action-Aplay">
+                        <div class="bulk-actions">
+                        <select id="bulk-action">
+                            <option value="">Bulk Actions</option>
+                            <option value="activate">Activate</option>
+                            <option value="deactivate">Deactivate</option>
+                            <option value="ban">Ban</option>
+                            <option value="delete">Delete</option>
+                            <option value="export">Export</option>
+                        </select>
+                        <button class="btn-apply-bulk">Apply</button>
+                    </div>
+                    <div class="pagination-container">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <div class="pagination-controls">
+                            <div class="pagination-buttons" id="paginationControls"></div>
+                        </div>
+                    </div>
+                     </div>
+                    
+                    
+                    <div style="display: none;" class="page-size-selector">
+                        <label for="pageSize">Show:</label>
+                        <select id="pageSize">
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+                    <!-- Pagination -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div class="modal" id="addUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New User</h3>
+                <button class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" enctype="multipart/form-data">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="username">User name <span class="required">*</span></label>
+                            <input type="text" id="username" name="username" required placeholder="Enter your username">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email <span class="required">*</span></label>
+                            <input type="email" id="email" name="email" required placeholder="Enter email">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Password <span class="required">*</span></label>
+                            <input type="password" id="password" name="password" required placeholder="Enter your password">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Phone number</label>
+                            <input type="tel" id="phone_number" name="phone_number" placeholder="Enter phone number">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date_of_birth">Date of Birth</label>
+                            <input type="date" id="date_of_birth" name="date_of_birth" placeholder="Enter Date of Birth">
+                        </div>
+                        <div class="form-group"> 
+                            <label for="is_admin">Administrator?</label> 
+                            <select id="is_admin" name="is_admin"> 
+                            <option value="false">No</option> 
+                            <option value="true">Yes</option> 
+                            </select> 
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel">Cancel</button>
+                        <button type="submit" class="btn-save">Save user</button>
+                    </div>
+                    <div id="result"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal delete-confirm-modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Delete</h3>
+                <button class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this customer?</p>
+                <div class="customer-summary">
+                    <img id="delete-customer-pic" src="" alt="Customer">
+                    <div class="customer-info">
+                        <h4 id="delete-customer-name"></h4>
+                        <span id="delete-customer-email"></span>
+                        <span id="delete-customer-id"></span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel">Cancel</button>
+                    <button type="button" class="btn-confirm-delete" id="confirmDeleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999; /* عشان يكون فوق كل العناصر */
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+    </style>
+    <!-- Customer Detail Modal -->
+    <div class="modal" id="customerDetailModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Customer Details</h3>
+                <button class="btn-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="customer-detail-container">
+                    <!-- Customer Summary -->
+                    <div class="customer-summary">
+                        <div class="customer-profile">
+                            <img id="customer-profile-pic" src="" alt="Customer">
+                            <div>
+                                <h4 id="customer-full-name"></h4>
+                                <span id="customer-status" class="status active"></span>
+                                <span id="customer-id" class="customer-id"></span>
+                            </div>
+                        </div>
+                        <div class="customer-stats">
+                            <div class="stat-card">
+                                <div class="stat-value" id="customer-orders-count"></div>
+                                <div class="stat-label">Total Orders</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="customer-total-spent"></div>
+                                <div class="stat-label">Total Spent</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="customer-avg-rating"></div>
+                                <div class="stat-label">Avg. Rating</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="customer-wishlist-count"></div>
+                                <div class="stat-label">Wishlist Items</div>
+                            </div>
+                        </div>
+                        <div style="display: none;" class="customer-actions">
+                            <button class="btn-send-email"><i class="fas fa-envelope"></i> Send Email</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Customer Tabs -->
+                    <div class="customer-tabs">
+                        <div class="tabs-header">
+                            <button class="tab-btn active" data-tab="overview">Overview</button>
+                            <button class="tab-btn" data-tab="orders">Orders</button>
+                            <button class="tab-btn" data-tab="wishlist">Wishlist</button>
+                            <button class="tab-btn" data-tab="activity">Activity</button>
+                        </div>
+                        
+                        <div class="tabs-content">
+                            <!-- Overview Tab -->
+                            <div class="tab-pane active" id="overview">
+                                <div class="info-section">
+                                    <h4>Personal Information</h4>
+                                    <div class="customer-details-grid">
+                                        <div class="info-item">
+                                            <span class="info-label">Full Name:</span>
+                                            <span class="info-value" id="overview-full-name"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Email:</span>
+                                            <span class="info-value" id="overview-email"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Phone:</span>
+                                            <span class="info-value" id="overview-phone"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Date of Birth:</span>
+                                            <span class="info-value" id="overview-date-of-birth"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Admin Status:</span>
+                                            <span class="info-value" id="overview-is-admin"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Status:</span>
+                                            <span class="info-value" id="overview-status"></span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Username:</span>
+                                            <span class="info-value" id="overview-username"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-section">
+                                    <h4>Default Address</h4>
+                                    <address id="overview-address"></address>
+                                </div>
+                                
+                                <div class="info-section">
+                                    <h4>Recent Reviews</h4>
+                                    <div class="reviews-list" id="reviews-list"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Orders Tab -->
+                            <div class="tab-pane" id="orders">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Order</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Total</th>
+                                            <th>Items</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="orders-table-body"></tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Wishlist Tab -->
+                            <div class="tab-pane" id="wishlist">
+                                <div class="wishlist-items" id="wishlist-items"></div>
+                            </div>
+                            
+                            <!-- Activity Tab -->
+                            <div class="tab-pane" id="activity">
+                                <div class="activity-list" id="activity-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Configuration
+            const API_BASE_URL = '/api/users/show-custom/';
+            const API_CREATE_URL = '/api/users/create/';
+
+            // State management
+            let currentPage = 1;
+            let totalPages = 1;
+            let totalCustomers = 0;
+            let pageSize = 8;
+            let searchTerm = '';
+            let filters = {};
+            let isLoading = false;
+            let allCustomers = [];
+            let filteredCustomers = [];
+            let deleteCustomerId = null;
+
+            // DOM Elements
+            const elements = {
+                loadingContainer: document.getElementById('loadingContainer'),
+                customersTable: document.getElementById('customersTable'),
+                customersTableBody: document.getElementById('customersTableBody'),
+                noResults: document.getElementById('noResults'),
+                paginationInfo: document.getElementById('paginationInfo'),
+                paginationControls: document.getElementById('paginationControls'),
+                pageSize: document.getElementById('pageSize'),
+                liveSearch: document.getElementById('liveSearch'),
+                searchLoader: document.getElementById('searchLoader'),
+                selectAllCheckbox: document.getElementById('selectAllCustomers'),
+                bulkActionSelect: document.getElementById('bulk-action'),
+                applyBulkBtn: document.querySelector('.btn-apply-bulk'),
+                addCustomerBtn: document.getElementById('addCustomerBtn'),
+                addUserModal: document.getElementById('addUserModal'),
+                userForm: document.getElementById('userForm'),
+                customerDetailModal: document.getElementById('customerDetailModal'),
+                customerDetailCloseBtn: document.querySelector('#customerDetailModal .btn-close'),
+                applyFilters: document.getElementById('applyFilters'),
+                resetFilters: document.getElementById('resetFilters'),
+                dateFilter: document.getElementById('customer-date'),
+                orderCountFilter: document.getElementById('order-count'),
+                totalSpentFilter: document.getElementById('total-spent'),
+                addUserCloseBtn: document.querySelector('#addUserModal .btn-close'),
+                addUserCancelBtn: document.querySelector('#addUserModal .btn-cancel'),
+                deleteConfirmModal: document.getElementById('deleteConfirmModal'),
+                deleteConfirmBtn: document.getElementById('confirmDeleteBtn'),
+                deleteCloseBtn: document.querySelector('#deleteConfirmModal .btn-close'),
+                deleteCancelBtn: document.querySelector('#deleteConfirmModal .btn-cancel'),
+                tableLoading: document.getElementById('tableLoading'),
+            };
+
+            // Utility Functions
+            function showLoading() {
+                if (!isLoading) {
+                    isLoading = true;
+                    elements.loadingContainer.style.display = 'flex';
+                    elements.customersTable.style.display = 'none';
+                    elements.noResults.style.display = 'none';
+                    elements.tableLoading.style.display = 'table-row';
+                }
+            }
+
+            function showTableLoading() {
+                elements.customersTableBody.innerHTML = '';
+                elements.tableLoading.style.display = 'table-row';
+                elements.customersTable.style.display = 'block';
+                elements.noResults.style.display = 'none';
+            }
+
+            function hideLoading() {
+                isLoading = false;
+                elements.loadingContainer.style.display = 'none';
+                elements.tableLoading.style.display = 'none';
+            }
+
+            function showSearchLoader() {
+                elements.searchLoader.style.display = 'block';
+            }
+
+            function hideSearchLoader() {
+                elements.searchLoader.style.display = 'none';
+            }
+
+            function showNoResults() {
+                elements.customersTable.style.display = 'none';
+                elements.noResults.style.display = 'flex';
+                elements.tableLoading.style.display = 'none';
+            }
+
+            function showTable() {
+                elements.customersTable.style.display = 'block';
+                elements.noResults.style.display = 'none';
+                elements.tableLoading.style.display = 'none';
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // Filter Functions
+            function applyClientSideFilters(customers) {
+                return customers.filter(customer => {
+                    const profile = customer.profile || {};
+                    const orders = customer.orders || [];
+                    const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+
+                    if (searchTerm) {
+                        const searchFields = [
+                            profile.first_name,
+                            profile.last_name,
+                            profile.email,
+                            customer.email,
+                            customer.username,
+                            `CUS-${customer.id}`
+                        ].filter(Boolean).join(' ').toLowerCase();
+                        if (!searchFields.includes(searchTerm.toLowerCase())) {
+                            return false;
+                        }
+                    }
+
+                    if (filters.orderCount) {
+                        const orderCount = orders.length;
+                        switch (filters.orderCount) {
+                            case '0': if (orderCount !== 0) return false; break;
+                            case '1-5': if (orderCount < 1 || orderCount > 5) return false; break;
+                            case '6-10': if (orderCount < 6 || orderCount > 10) return false; break;
+                            case '10+': if (orderCount < 10) return false; break;
+                        }
+                    }
+
+                    if (filters.totalSpent) {
+                        switch (filters.totalSpent) {
+                            case '0-50': if (totalSpent < 0 || totalSpent > 50) return false; break;
+                            case '51-100': if (totalSpent < 51 || totalSpent > 100) return false; break;
+                            case '101-500': if (totalSpent < 101 || totalSpent > 500) return false; break;
+                            case '500+': if (totalSpent < 500) return false; break;
+                        }
+                    }
+
+                    if (filters.dateRange && customer.last_order) {
+                        const orderDate = new Date(customer.last_order.created_at);
+                        const now = new Date();
+                        const diffTime = Math.abs(now - orderDate);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        switch (filters.dateRange) {
+                            case 'today': if (diffDays > 1) return false; break;
+                            case 'week': if (diffDays > 7) return false; break;
+                            case 'month': if (diffDays > 30) return false; break;
+                            case 'year': if (diffDays > 365) return false; break;
+                        }
+                    }
+
+                    return true;
+                });
+            }
+
+            // Fetch Functions
+            async function fetchAllCustomers() {
+                try {
+                    showLoading();
+                    showTableLoading();
+                    const response = await fetch(`${API_BASE_URL}?page_size=1000`);
+                    if (!response.ok) throw new Error(`Failed to fetch customers: ${response.statusText}`);
+                    const data = await response.json();
+                    allCustomers = Array.isArray(data) ? data : data.results || [];
+                    
+                    if (allCustomers.length === 0) {
+                        showNoResults();
+                        hideLoading();
+                        return;
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    applyFiltersAndRender();
+                } catch (error) {
+                    console.error('Error fetching customers:', error);
+                    showNoResults();
+                    hideLoading();
+                }
+            }
+
+            function applyFiltersAndRender() {
+                filteredCustomers = applyClientSideFilters(allCustomers);
+                totalCustomers = filteredCustomers.length;
+                totalPages = Math.max(1, Math.ceil(totalCustomers / pageSize));
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                }
+                renderCurrentPage();
+                hideLoading();
+            }
+
+            function renderCurrentPage() {
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = startIndex + pageSize;
+                const currentPageCustomers = filteredCustomers.slice(startIndex, endIndex);
+                if (currentPageCustomers.length === 0 && filteredCustomers.length === 0) {
+                    showNoResults();
+                    updatePaginationInfo();
+                    return;
+                }
+                showTable();
+                renderCustomers(currentPageCustomers);
+                updatePaginationControls();
+                updatePaginationInfo();
+            }
+
+            // Render Functions
+            function renderCustomers(customers) {
+                elements.customersTableBody.innerHTML = '';
+                elements.tableLoading.style.display = 'none';
+                if (!Array.isArray(customers)) {
+                    console.error('Customers is not an array:', customers);
+                    alert('Invalid data format received from server.');
+                    return;
+                }
+                customers.forEach(customer => {
+                    const profile = customer.profile || {};
+                    const orders = customer.orders || [];
+                    const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+                    const lastOrder = customer.last_order ? new Date(customer.last_order.created_at).toLocaleDateString() : 'N/A';
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="customer-checkbox" data-id="${customer.id}"></td>
+                        <td class="customer-info">
+                            <img src="${customer.profile_picture || '/static/img/blank-profile-picture-973460_1280.webp'}" alt="Customer">
+                            <div>
+                                <h4>${profile.first_name || 'N/A'} ${profile.last_name || 'N/A'}</h4>
+                                <span>ID: #CUS-${customer.id}</span>
+                            </div>
+                        </td>
+                        <td>${customer.email || 'N/A'}</td>
+                        <td class="truncate" title="${profile.address || 'N/A'}">${profile.address || 'N/A'}</td>
+                        <td><span class="badge badge-info">${orders.length}</span></td>
+                        <td><span class="currency">$${totalSpent.toFixed(2)}</span></td>
+                        <td>${lastOrder}</td>
+                        <td><span class="status ${customer.is_active ? 'active' : 'inactive'}">${customer.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td class="actions">
+                            <button class="btn-view" data-id="${customer.id}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn-delete" data-id="${customer.id}" title="Delete Customer">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    elements.customersTableBody.appendChild(row);
+                });
+                attachTableEventListeners();
+            }
+
+            function attachTableEventListeners() {
+                document.querySelectorAll('.btn-view').forEach(btn => {
+                    btn.addEventListener('click', () => showCustomerDetails(btn.dataset.id));
+                });
+                document.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', () => showDeleteConfirmModal(btn.dataset.id));
+                });
+                document.querySelectorAll('.customer-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', updateSelectAllState);
+                });
+            }
+
+            // Pagination Functions
+            function createPaginationButton(text, page) {
+                const btn = document.createElement('button');
+                btn.className = 'btn-pagination';
+                btn.textContent = text;
+                btn.addEventListener('click', () => {
+                    currentPage = page;
+                    renderCurrentPage();
+                });
+                return btn;
+            }
+
+            function createPaginationEllipsis() {
+                const span = document.createElement('span');
+                span.className = 'pagination-ellipsis';
+                span.textContent = '...';
+                return span;
+            }
+
+            function updatePaginationControls() {
+                elements.paginationControls.innerHTML = '';
+                if (totalPages <= 1) return;
+
+                if (currentPage > 1) {
+                    const prevBtn = createPaginationButton('‹', currentPage - 1);
+                    prevBtn.className += ' prev-next';
+                    elements.paginationControls.appendChild(prevBtn);
+                }
+
+                const startPage = Math.max(1, currentPage - 2);
+                const endPage = Math.min(totalPages, currentPage + 2);
+                if (startPage > 1) {
+                    elements.paginationControls.appendChild(createPaginationEllipsis());
+                }
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageBtn = createPaginationButton(i, i);
+                    if (i === currentPage) {
+                        pageBtn.classList.add('active');
+                    }
+                    elements.paginationControls.appendChild(pageBtn);
+                }
+                if (endPage < totalPages) {
+                    elements.paginationControls.appendChild(createPaginationEllipsis());
+                }
+
+                if (currentPage < totalPages) {
+                    const nextBtn = createPaginationButton('›', currentPage + 1);
+                    nextBtn.className += ' prev-next';
+                    elements.paginationControls.appendChild(nextBtn);
+                }
+            }
+
+            function updatePaginationInfo() {
+                const startIndex = (currentPage - 1) * pageSize + 1;
+                const endIndex = Math.min(currentPage * pageSize, totalCustomers);
+                elements.paginationInfo.textContent = `Showing ${totalCustomers === 0 ? 0 : startIndex} to ${endIndex} of ${totalCustomers} customers`;
+            }
+
+            // Customer Details
+            async function showCustomerDetails(customerId) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}${customerId}/`);
+                    if (!response.ok) throw new Error('Failed to fetch customer details');
+                    const customer = await response.json();
+                    const profile = customer.profile || {};
+                    const orders = customer.orders || [];
+                    const reviews = customer.reviews || [];
+                    const wishlist = customer.wishlist || [];
+                    const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+                    const avgRating = reviews.length ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1) : 'N/A';
+
+                    document.getElementById('customer-profile-pic').src = customer.profile_picture || '/static/img/blank-profile-picture-973460_1280.webp';
+                    document.getElementById('customer-full-name').textContent = `${profile.first_name || 'N/A'} ${profile.last_name || 'N/A'}`;
+                    document.getElementById('customer-status').textContent = customer.is_active ? 'Active' : 'Inactive';
+                    document.getElementById('customer-id').textContent = `ID: #CUS-${customer.id}`;
+                    document.getElementById('customer-orders-count').textContent = orders.length;
+                    document.getElementById('customer-total-spent').textContent = `$${totalSpent.toFixed(2)}`;
+                    document.getElementById('customer-avg-rating').textContent = avgRating;
+                    document.getElementById('customer-wishlist-count').textContent = wishlist.length;
+
+                    document.getElementById('overview-full-name').textContent = `${profile.first_name || 'N/A'} ${profile.last_name || 'N/A'}`;
+                    document.getElementById('overview-email').textContent = customer.email || 'N/A';
+                    document.getElementById('overview-phone').textContent = profile.phone || 'N/A';
+                    document.getElementById('overview-date-of-birth').textContent = customer.date_of_birth ? new Date(customer.date_of_birth).toLocaleDateString() : 'N/A';
+                    document.getElementById('overview-is-admin').textContent = customer.is_admin ? 'Yes' : 'No';
+                    document.getElementById('overview-status').textContent = customer.is_active ? 'Active' : 'Inactive';
+                    document.getElementById('overview-username').textContent = customer.username || 'N/A';
+                    document.getElementById('overview-address').textContent = profile.address || 'N/A';
+
+                    const reviewsList = document.getElementById('reviews-list');
+                    reviewsList.innerHTML = '';
+                    reviews.forEach(review => {
+                        const reviewItem = document.createElement('div');
+                        reviewItem.className = 'review-item';
+                        reviewItem.innerHTML = `
+                            <div class="review-header">
+                                <span class="review-product">${review.product.title}</span>
+                                <span class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span>
+                            </div>
+                            <div class="review-content">${review.comment}</div>
+                            <div class="review-date">${new Date(review.created_at).toLocaleDateString()}</div>
+                        `;
+                        reviewsList.appendChild(reviewItem);
+                    });
+
+                    const ordersTableBody = document.getElementById('orders-table-body');
+                    ordersTableBody.innerHTML = '';
+                    orders.forEach(order => {
+                        const itemsList = order.items.map(item => `${item.product.title} (x${item.quantity})`).join(', ');
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>#ORD-${order.id}</td>
+                            <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                            <td><span class="status ${order.is_paid ? 'delivered' : 'pending'}">${order.is_paid ? 'Delivered' : 'Pending'}</span></td>
+                            <td>$${parseFloat(order.total_price).toFixed(2)}</td>
+                            <td class="truncate" title="${itemsList}">${itemsList || 'No items'}</td>
+                            <td><button class="btn-view">View</button></td>
+                        `;
+                        ordersTableBody.appendChild(row);
+                    });
+
+                    const wishlistItems = document.getElementById('wishlist-items');
+                    wishlistItems.innerHTML = '';
+                    wishlist.forEach(item => {
+                        const wishlistItem = document.createElement('div');
+                        wishlistItem.className = 'wishlist-item';
+                        wishlistItem.innerHTML = `
+                            <img src="${item.product.image_1}" alt="${item.product.title}">
+                            <span>${item.product.title}</span>
+                            <span>$${parseFloat(item.product.price).toFixed(2)}</span>
+                        `;
+                        wishlistItems.appendChild(wishlistItem);
+                    });
+
+                    const activityList = document.getElementById('activity-list');
+                    activityList.innerHTML = '';
+                    orders.forEach(order => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        activityItem.innerHTML = `
+                            <div class="activity-icon">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="activity-title">Placed Order #ORD-${order.id}</span>
+                                    <span class="activity-date">${new Date(order.created_at).toLocaleDateString()} at ${new Date(order.created_at).toLocaleTimeString()}</span>
+                                </div>
+                                <div class="activity-details">
+                                    Total: $${parseFloat(order.total_price).toFixed(2)} | Status: ${order.is_paid ? 'Delivered' : 'Pending'}
+                                </div>
+                            </div>
+                        `;
+                        activityList.appendChild(activityItem);
+                    });
+                    reviews.forEach(review => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        activityItem.innerHTML = `
+                            <div class="activity-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="activity-title">Left a product review</span>
+                                    <span class="activity-date">${new Date(review.created_at).toLocaleDateString()} at ${new Date(review.created_at).toLocaleTimeString()}</span>
+                                </div>
+                                <div class="activity-details">
+                                    Rated "${review.product.title}" ${review.rating} stars
+                                </div>
+                            </div>
+                        `;
+                        activityList.appendChild(activityItem);
+                    });
+                    wishlist.forEach(item => {
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'activity-item';
+                        activityItem.innerHTML = `
+                            <div class="activity-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="activity-content">
+                                <div class="activity-header">
+                                    <span class="activity-title">Added to wishlist</span>
+                                    <span class="activity-date">${new Date(item.added_at).toLocaleDateString()} at ${new Date(item.added_at).toLocaleTimeString()}</span>
+                                </div>
+                                <div class="activity-details">
+                                    Product: ${item.product.title}
+                                </div>
+                            </div>
+                        `;
+                        activityList.appendChild(activityItem);
+                    });
+
+                    elements.customerDetailModal.style.display = 'block';
+
+                    document.querySelectorAll('.tab-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                            btn.classList.add('active');
+                            document.getElementById(btn.dataset.tab).classList.add('active');
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error fetching customer details:', error);
+                    alert('Failed to load customer details. Please try again.');
+                }
+            }
+
+            // Delete Confirmation
+            async function showDeleteConfirmModal(customerId) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}${customerId}/`);
+                    if (!response.ok) throw new Error('Failed to fetch customer details');
+                    const customer = await response.json();
+                    const profile = customer.profile || {};
+
+                    document.getElementById('delete-customer-pic').src = customer.profile_picture || '/static/img/blank-profile-picture-973460_1280.webp';
+                    document.getElementById('delete-customer-name').textContent = `${profile.first_name || 'N/A'} ${profile.last_name || 'N/A'}`;
+                    document.getElementById('delete-customer-email').textContent = customer.email || 'N/A';
+                    document.getElementById('delete-customer-id').textContent = `ID: #CUS-${customer.id}`;
+                    deleteCustomerId = customerId;
+
+                    elements.deleteConfirmModal.style.display = 'block';
+                } catch (error) {
+                    console.error('Error fetching customer for deletion:', error);
+                    alert('Failed to load customer data for deletion. Please try again.');
+                }
+            }
+
+            // Delete Customer
+            async function deleteCustomer() {
+                try {
+                    const response = await fetch(`${API_BASE_URL}${deleteCustomerId}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    if (!response.ok) throw new Error('Failed to delete customer');
+                    elements.deleteConfirmModal.style.display = 'none';
+                    fetchAllCustomers();
+                } catch (error) {
+                    console.error('Error deleting customer:', error);
+                    alert('Failed to delete customer. Please try again.');
+                }
+            }
+
+            // Bulk Actions
+            async function handleBulkActions() {
+                const action = elements.bulkActionSelect.value;
+                const selectedCheckboxes = document.querySelectorAll('.customer-checkbox:checked');
+                const selectedIds = Array.from(selectedCheckboxes).map(cb => cb.dataset.id);
+                if (!action || selectedIds.length === 0) {
+                    alert('Please select an action and at least one customer.');
+                    return;
+                }
+                if (action === 'delete') {
+                    if (!confirm(`Are you sure you want to remove the selected customer(s)?`)) return;
+                    try {
+                        for (const id of selectedIds) {
+                            await fetch(`${API_BASE_URL}${id}/`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                            });
+                        }
+                        alert('Selected customers deleted successfully!');
+                        fetchAllCustomers();
+                    } catch (error) {
+                        console.error('Error deleting customers:', error);
+                        alert('Failed to delete customers. Please try again.');
+                    }
+                } else {
+                    alert(`Bulk action "${action}" is not implemented yet.`);
+                }
+            }
+
+            // Add User Form Submission
+            elements.userForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const form = e.target;
+                const formData = {
+                    username: form.username.value,
+                    email: form.email.value,
+                    password: form.password.value,
+                    phone_number: form.phone_number.value || null,
+                    date_of_birth: form.date_of_birth.value || null,
+                    is_admin: form.is_admin.value === 'true',
+                };
+
+                try {
+                    const response = await fetch(API_CREATE_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData),
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        document.getElementById('result').innerText = '✅ تم إنشاء المستخدم بنجاح';
+                        elements.addUserModal.style.display = 'none';
+                        form.reset();
+                        fetchAllCustomers();
+                    } else {
+                        document.getElementById('result').innerText = '❌ فشل: ' + JSON.stringify(result);
+                    }
+                } catch (err) {
+                    document.getElementById('result').innerText = '❌ خطأ في الاتصال بالسيرفر';
+                    console.error(err);
+                }
+            });
+
+            // Event Listeners
+            elements.liveSearch.addEventListener('input', debounce(() => {
+                searchTerm = elements.liveSearch.value.trim();
+                showSearchLoader();
+                setTimeout(() => {
+                    hideSearchLoader();
+                    currentPage = 1;
+                    applyFiltersAndRender();
+                }, 300);
+            }));
+
+            elements.applyFilters.addEventListener('click', () => {
+                filters = {
+                    dateRange: elements.dateFilter.value,
+                    orderCount: elements.orderCountFilter.value,
+                    totalSpent: elements.totalSpentFilter.value
+                };
+                currentPage = 1;
+                applyFiltersAndRender();
+            });
+
+            elements.resetFilters.addEventListener('click', () => {
+                elements.dateFilter.value = '';
+                elements.orderCountFilter.value = '';
+                elements.totalSpentFilter.value = '';
+                filters = {};
+                searchTerm = '';
+                elements.liveSearch.value = '';
+                currentPage = 1;
+                applyFiltersAndRender();
+            });
+
+            elements.selectAllCheckbox.addEventListener('change', () => {
+                const checkboxes = document.querySelectorAll('.customer-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = elements.selectAllCheckbox.checked;
+                });
+            });
+
+            function updateSelectAllState() {
+                const checkboxes = document.querySelectorAll('.customer-checkbox');
+                const checkedCount = document.querySelectorAll('.customer-checkbox:checked').length;
+                elements.selectAllCheckbox.checked = checkedCount === checkboxes.length && checkboxes.length > 0;
+                elements.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+            }
+
+            elements.applyBulkBtn.addEventListener('click', handleBulkActions);
+
+            elements.addCustomerBtn.addEventListener('click', () => {
+                elements.addUserModal.style.display = 'block';
+            });
+
+            elements.addUserCloseBtn.addEventListener('click', () => {
+                elements.addUserModal.style.display = 'none';
+                elements.userForm.reset();
+            });
+
+            elements.addUserCancelBtn.addEventListener('click', () => {
+                elements.addUserModal.style.display = 'none';
+                elements.userForm.reset();
+            });
+
+            elements.customerDetailCloseBtn.addEventListener('click', () => {
+                elements.customerDetailModal.style.display = 'none';
+            });
+
+            elements.deleteCloseBtn.addEventListener('click', () => {
+                elements.deleteConfirmModal.style.display = 'none';
+                deleteCustomerId = null;
+            });
+
+            elements.deleteCancelBtn.addEventListener('click', () => {
+                elements.deleteConfirmModal.style.display = 'none';
+                deleteCustomerId = null;
+            });
+
+            elements.deleteConfirmBtn.addEventListener('click', deleteCustomer);
+
+            // Initial fetch
+            fetchAllCustomers();
+        });
+    </script>
+</body>
+</html>

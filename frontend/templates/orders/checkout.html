@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Elegant Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% if Settings.logo %}
+        <link rel="icon" href="{{ Settings.logo.url }}" type="image/png">
+    {% else %}
+        <link rel="icon" href="\static\img\images (1).png" type="image/png">
+    {% endif %}
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+        .loader {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #1e40af;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        .loader.show {
+            display: block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .modal {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .modal.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        #discountRow {
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .btn-success {
+            background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+        }
+        .btn-success:hover {
+            background: linear-gradient(90deg, #047857 0%, #059669 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .cart-item {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .cart-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+        .delete-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+        }
+        .delete-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #000000;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .quantity-btn:hover:not(:disabled) {
+            background: #000000;
+            transform: scale(1.1);
+        }
+        .quantity-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 25px;
+            border: 1px solid #e1e8ed;
+            position: relative;
+        }
+        .quantity-loader {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e1e8ed;
+            border-top: 2px solid #000000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            position: absolute;
+            left: 43%;
+        }
+        .cart-item.removing {
+            opacity: 0;
+            transform: translateX(-100%) scale(0.9);
+            max-height: 0;
+            margin-bottom: 0;
+            padding: 0;
+            transition: all 0.4s ease;
+        }
+        #product_list_2{
+            color:#3b82f6 ;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <header class="bg-white rounded-2xl shadow-lg p-8 mb-8 border-t-4 border-blue-600">
+            <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+            <p class="text-gray-600 mt-2">Complete your order with our special discounts!</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Checkout Form -->
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+                <div id="errorMessage" class="hidden"></div>
+                <form id="checkoutForm" class="space-y-8">
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900 border-b-2 border-gray-200 pb-4 mb-6">Customer Information</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="firstName" class="block text-sm font-medium text-gray-700">First Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="firstName" name="firstName" required placeholder="Enter first name" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
+                            </div>
+                            <div>
+                                <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name <span class="text-red-500">*</span></label>
+                                <input type="text" id="lastName" name="lastName" required placeholder="Enter last name" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address <span class="text-red-500">*</span></label>
+                            <input type="email" id="email" name="email" required placeholder="example@mail.com" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
+                        </div>
+                        <div class="mt-6">
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number <span class="text-red-500">*</span></label>
+                            <input type="tel" id="phone" name="phone" required placeholder="+212635652206" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
+                        </div>
+                        <div class="mt-6">
+                            <label for="address" class="block text-sm font-medium text-gray-700">Full Address <span class="text-red-500">*</span></label>
+                            <textarea id="address" name="address" required placeholder="Enter your complete shipping address" class="mt-1 block w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50 resize-vertical min-h-[120px]"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <input type="checkbox" id="terms" name="terms" required class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="terms" class="ml-3 block text-sm text-gray-700">I agree to the Terms of Service and Privacy Policy <span class="text-red-500">*</span></label>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-200 sticky top-6">
+                <h2 class="text-2xl font-semibold text-gray-900 border-b-2 border-gray-200 pb-4 mb-6">Order Summary</h2>
+                <div class="loader" id="cartLoader"></div>
+                <div class="cart-items-container" id="cartItemsContainer"></div>
+                <div class="mt-6">
+                    <label for="couponCode" class="block text-sm font-medium text-gray-700">Coupon Code <span class="text-gray-500 text-xs">(optional)</span></label>
+                    <div class="flex mt-2 gap-3">
+                        <input type="text" id="couponCode" name="couponCode" placeholder="Enter discount code" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-gray-50">
+                        <button type="button" id="applyCouponBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">Apply</button>
+                    </div>
+                    <div id="couponMessage" class="hidden mt-2"></div>
+                </div>
+                <div class="mt-6 border-t-2 border-gray-200 pt-6 space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">Subtotal:</span>
+                        <span id="subtotal" class="font-medium">0.00 DH</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-700">Delivery:</span>
+                        <span id="delivery" class="font-medium">0.00 DH</span>
+                    </div>
+                    <div id="discountRow" class="flex justify-between items-center hidden">
+                        <div class="flex items-center">
+                            <span class="text-gray-700">Discount</span>
+                            <span id="discountPercent" class="mr-1 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">0%</span>
+                        </div>
+                        <span id="discount" class="text-red-600 font-bold">-0.00 DH</span>
+                    </div>
+                    <div class="flex justify-between pt-3 border-t border-gray-200">
+                        <span class="text-lg font-bold">Total:</span>
+                        <span id="total" class="text-lg font-bold text-blue-600">0.00 DH</span>
+                    </div>
+                </div>
+                <button type="submit" form="checkoutForm" class="mt-8 w-full px-6 py-4 btn-primary text-white rounded-lg font-semibold text-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-check"></i> Complete Order
+                </button>
+                <a href="{% url 'view_cart' %}" class="mt-4 w-full px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 hover:bg-gray-300 transition">
+                    <i class="fas fa-arrow-left"></i> Back to Cart
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 opacity-0 invisible" id="confirmModal">
+        <div class="modal-content bg-white rounded-2xl p-10 max-w-lg w-full text-center transform translate-y-[-50px] opacity-0 border-2 border-blue-600">
+            <button class="close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-xl" onclick="closeModal('confirmModal')">×</button>
+            <div class="modal-image mb-6">
+                <i class="fas fa-shopping-cart text-6xl text-blue-600 animate-bounce"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
+                <i class="fas fa-shopping-cart"></i> Confirm Your Order
+            </h2>
+            <p class="text-gray-600 mb-6">Double-check your order details. Ready to proceed with your purchase?</p>
+            <div id="orderSummary" class="text-left mb-6"></div>
+            <div class="flex gap-4 justify-center">
+                <button class="modal-btn btn-primary px-6 py-3 text-white rounded-lg font-semibold" onclick="submitOrder()">Confirm Order</button>
+                <button class="modal-btn bg-gray-200 px-6 py-3 text-gray-900 rounded-lg font-semibold hover:bg-gray-300" onclick="closeModal('confirmModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 opacity-0 invisible" id="successModal">
+        <div class="modal-content success bg-gradient-to-br from-white to-green-50 rounded-2xl p-10 max-w-lg w-full text-center transform translate-y-[-50px] opacity-0 border-2 border-green-600">
+            <button class="close-btn absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-xl" onclick="closeModal('successModal')">×</button>
+            <div class="modal-image mb-6">
+                <i class="fas fa-check-circle text-6xl text-green-600 animate-bounce"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-green-600 mb-4 flex items-center justify-center gap-2">
+                <i class="fas fa-check-circle"></i> Order Placed Successfully!
+            </h2>
+            <p class="text-gray-600 mb-6">Your order is confirmed! A confirmation email is on its way to your inbox.</p>
+            <div class="flex gap-4 justify-center" id="successModalButtons">
+                <!-- Buttons will be dynamically updated based on review status -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const CURRENCY = "DH";
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
+
+        const cartItemsContainer = document.getElementById("cartItemsContainer");
+        const cartLoader = document.getElementById("cartLoader");
+        const subtotalElem = document.getElementById("subtotal");
+        const discountElem = document.getElementById("discount");
+        const discountPercentElem = document.getElementById("discountPercent");
+        const discountRow = document.getElementById("discountRow");
+        const deliveryElem = document.getElementById("delivery");
+        const totalElem = document.getElementById("total");
+        const checkoutForm = document.getElementById("checkoutForm");
+        const couponInput = document.getElementById("couponCode");
+        const applyCouponBtn = document.getElementById("applyCouponBtn");
+        const couponMessage = document.getElementById("couponMessage");
+
+        let appliedCoupon = null;
+        let discountPercent = 0;
+        let deliveryFee = 0;
+        let subtotal = 0;
+
+        // Function to get CSRF token
+        function getCSRFToken() {
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                            '';
+            return csrfToken;
+        }
+
+        // Show error message and scroll to top
+        function showError(message) {
+            const errorDiv = document.getElementById("errorMessage");
+            errorDiv.innerHTML = `
+                <div class="bg-red-100 text-red-700 p-3 rounded-lg flex items-center gap-2">
+                    <i class="fas fa-exclamation-circle"></i> ${message}
+                </div>
+            `;
+            errorDiv.classList.remove("hidden");
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+        }
+
+        // Clear error message
+        function clearError() {
+            const errorDiv = document.getElementById("errorMessage");
+            if (errorDiv) errorDiv.classList.add("hidden");
+        }
+
+        // Show loader
+        function showLoader() {
+            cartLoader.classList.add("show");
+            cartItemsContainer.classList.add("hidden");
+        }
+
+        // Hide loader
+        function hideLoader() {
+            cartLoader.classList.remove("show");
+            cartItemsContainer.classList.remove("hidden");
+        }
+
+        // Update totals
+        function updateTotals() {
+            const discountAmount = (subtotal * discountPercent) / 100;
+            const total = subtotal - discountAmount + deliveryFee;
+            
+            subtotalElem.textContent = `${subtotal.toFixed(2)} ${CURRENCY}`;
+            deliveryElem.textContent = `${deliveryFee.toFixed(2)} ${CURRENCY}`;
+            
+            if (discountPercent > 0 && discountAmount > 0) {
+                discountElem.textContent = `-${discountAmount.toFixed(2)} ${CURRENCY}`;
+                discountPercentElem.textContent = discountPercent;
+                discountRow.classList.remove("hidden");
+                discountRow.classList.add("flex");
+            } else {
+                discountRow.classList.add("hidden");
+                discountRow.classList.remove("flex");
+            }
+            
+            totalElem.textContent = `${total.toFixed(2)} ${CURRENCY}`;
+            
+            console.log('Totals updated:', {
+                subtotal: subtotal,
+                discountPercent: discountPercent,
+                discountAmount: discountAmount,
+                total: total
+            });
+        }
+
+        // Handle item deletion
+        async function handleDeleteItem(productId, itemElement) {
+            const deleteBtn = itemElement.querySelector('.delete-btn');
+            deleteBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`/api/cart/delete/${productId}/`, {
+                    method: "DELETE",
+                    credentials: "include",
+                    headers: {
+                        "X-CSRFToken": getCSRFToken()
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to delete item");
+                }
+
+                // Add removing class for animation
+                itemElement.classList.add('removing');
+                
+                // Wait for animation to complete
+                setTimeout(() => {
+                    itemElement.remove();
+                    loadCart(); // Reload cart to update totals
+                }, 400);
+
+            } catch (err) {
+                showError("Failed to remove item. Please try again.");
+                deleteBtn.disabled = false;
+            }
+        }
+
+        // Load cart and discount data
+        function loadCart() {
+            showLoader();
+            
+            // Reset coupon-related variables
+            appliedCoupon = null;
+            discountPercent = 0;
+            couponInput.value = '';
+            couponMessage.classList.add('hidden');
+
+            // First load discount settings
+            fetch("/api/discounts/")
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to load discount data");
+                    return res.json();
+                })
+                .then(discountData => {
+                    if (discountData.length > 0) {
+                        const discount = discountData[0];
+                        deliveryFee = parseFloat(discount.delivery_fee) || 0;
+                        discountPercent = parseFloat(discount.discount_percent) || 0;
+                        console.log('Loaded global discount:', discountPercent + '%');
+                    } else {
+                        deliveryFee = 0;
+                        discountPercent = 0;
+                    }
+                    
+                    // Then load cart items
+                    return fetch("/api/cart/", {
+                        method: "GET",
+                        credentials: "include",
+                    });
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error("Failed to load cart");
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Cart items loaded:', data);
+                    cartItemsContainer.innerHTML = "";
+                    
+                    if (data.length === 0) {
+                        cartItemsContainer.innerHTML = `
+                            <div class="bg-yellow-100 text-yellow-800 p-3 rounded-lg">
+                                Your cart is currently empty <a id="product_list_2" href="{% url 'product_list' %}">Shop New</a>
+                            </div> 
+                        `;
+                        subtotal = 0;
+                    } else {
+                        subtotal = data.reduce((sum, item) => sum + parseFloat(item.get_total_price), 0);
+                        
+                        // Display cart items header
+                        cartItemsContainer.innerHTML = `
+                            <div class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <i class="fas fa-shopping-bag"></i> ${data.length} Item${data.length > 1 ? 's' : ''}
+                            </div>
+                        `;
+                        
+                        // Add each cart item
+                        data.forEach(item => {
+                            const product = item.product;
+                            const itemDiv = document.createElement("div");
+                            itemDiv.className = "cart-item flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-4 shadow-sm relative";
+                            
+                            itemDiv.innerHTML = `
+                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                                <img src="${product.image_1 || 'https://via.placeholder.com/70'}" 
+                                alt="${product.title}" 
+                                class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">${product.title}</div>
+                                <div class="text-sm text-gray-600">
+                                    ${product.size ? 'Size: ' + product.size.size + ' | ' : ''}
+                                    ${product.color ? 'Color: ' + product.color.color : ''}
+                                </div>
+                                <div class="font-semibold text-gray-900 mt-1">
+                                    ${parseFloat(product.price).toFixed(2)} ${CURRENCY}
+                                </div>
+                            </div>
+                            <button class="delete-btn" data-product-id="${product.id}">
+                                ✕
+                            </button>
+                            `;
+                            
+                            cartItemsContainer.appendChild(itemDiv);
+                        });
+
+                        // Attach event listeners to new elements
+                        attachCartItemEvents();
+                    }
+                    
+                    updateTotals();
+                    hideLoader();
+                })
+                .catch(err => {
+                    console.error('Error loading cart:', err);
+                    cartItemsContainer.innerHTML = `
+                        <div class="bg-red-100 text-red-700 p-3 rounded-lg">
+                            Error loading cart: ${err.message}
+                        </div>
+                    `;
+                    subtotal = 0;
+                    updateTotals();
+                    hideLoader();
+                });
+        }
+
+        // Function to attach event listeners to cart items
+        function attachCartItemEvents() {
+            // Delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.currentTarget.getAttribute('data-product-id');
+                    const itemElement = e.currentTarget.closest('.cart-item');
+                    handleDeleteItem(productId, itemElement);
+                });
+            });
+
+            // Quantity minus buttons
+            document.querySelectorAll('.minus-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.currentTarget.getAttribute('data-product-id');
+                    const quantityElement = e.currentTarget.nextElementSibling;
+                    const loaderElement = quantityElement.nextElementSibling;
+                    const currentQuantity = parseInt(quantityElement.textContent);
+                    
+                    if (currentQuantity > 1) {
+                        handleQuantityUpdate(productId, currentQuantity - 1, quantityElement, loaderElement);
+                    }
+                });
+            });
+
+            // Quantity plus buttons
+            document.querySelectorAll('.plus-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const productId = e.currentTarget.getAttribute('data-product-id');
+                    const quantityElement = e.currentTarget.previousElementSibling;
+                    const loaderElement = quantityElement.nextElementSibling;
+                    const currentQuantity = parseInt(quantityElement.textContent);
+                    
+                    if (currentQuantity < 10) {
+                        handleQuantityUpdate(productId, currentQuantity + 1, quantityElement, loaderElement);
+                    }
+                });
+            });
+        }
+
+        // Apply coupon
+        applyCouponBtn.addEventListener("click", () => {
+            const coupon = couponInput.value.trim();
+            if (!coupon) {
+                showError("Please enter a coupon code.");
+                return;
+            }
+            
+            applyCouponBtn.disabled = true;
+            applyCouponBtn.innerHTML = 'Applying... <i class="fas fa-spinner fa-spin ml-2"></i>';
+            
+            fetch("/api/validate-coupon/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify({ coupon: coupon })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Coupon validation failed");
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.valid) {
+                    discountPercent = data.discount_percent;
+                    couponMessage.innerHTML = `
+                        <div class="bg-green-100 text-green-700 p-3 rounded-lg">
+                            Coupon applied successfully! ${discountPercent}% discount
+                        </div>
+                    `;
+                    updateTotals();
+                } else {
+                    throw new Error(data.error || "Invalid coupon code");
+                }
+            })
+            .catch(error => {
+                discountPercent = 0;
+                couponMessage.innerHTML = `
+                    <div class="bg-red-100 text-red-700 p-3 rounded-lg">
+                        ${error.message}
+                    </div>
+                `;
+                updateTotals();
+            })
+            .finally(() => {
+                couponMessage.classList.remove("hidden");
+                applyCouponBtn.disabled = false;
+                applyCouponBtn.innerHTML = "Apply";
+            });
+        });
+
+        // Modal handling
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modalId === 'confirmModal') {
+                const orderSummary = document.getElementById("orderSummary");
+                orderSummary.innerHTML = `
+                    <div class="text-left">
+                        <p class="text-gray-700"><strong>Total:</strong> ${totalElem.textContent}</p>
+                        <p class="text-gray-700"><strong>Items:</strong> ${cartItemsContainer.querySelectorAll(".cart-item").length}</p>
+                        <p class="text-gray-700"><strong>Shipping:</strong> ${window.orderData?.address || 'N/A'}</p>
+                    </div>
+                `;
+            }
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Check if user has reviewed
+        async function checkReviewStatus() {
+            try {
+                const response = await fetch("/api/has-reviewed/", {
+                    method: "GET",
+                    credentials: "include",
+                    headers: {
+                        "X-CSRFToken": getCSRFToken()
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error("Failed to check review status");
+                }
+                const data = await response.json();
+                return data.has_reviewed; // Assuming the API returns { has_reviewed: boolean }
+            } catch (err) {
+                console.error("Error checking review status:", err);
+                return false; // Default to false if the API call fails
+            }
+        }
+
+        // Update success modal buttons based on review status
+        async function updateSuccessModalButtons() {
+            const hasReviewed = await checkReviewStatus();
+            const successModalButtons = document.getElementById("successModalButtons");
+            successModalButtons.innerHTML = `
+                ${hasReviewed ? `
+                    <a class="product_list" href="{% url 'product_list' %}"><button class="modal-btn bg-gray-200 px-6 py-3 text-gray-900 rounded-lg font-semibold hover:bg-gray-300">Continue Shopping</button></a>
+                ` : `
+                    <a class="add_review" href="{% url 'Review' %}"><button class="modal-btn bg-gray-200 px-6 py-3 text-gray-900 rounded-lg font-semibold hover:bg-gray-300">Add Review</button></a>
+                `}
+                <a class="product_list" href="{% url 'home' %}"><button class="modal-btn btn-success px-6 py-3 text-white rounded-lg font-semibold">Back to Home</button></a>
+            `;
+        }
+
+        // Handle form submission
+        checkoutForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            clearError();
+
+            const firstName = e.target.firstName.value.trim();
+            const lastName = e.target.lastName.value.trim();
+            const email = e.target.email.value.trim();
+            const phone = e.target.phone.value.trim();
+            const address = e.target.address.value.trim();
+            const terms = e.target.terms.checked;
+
+            if (!firstName || !lastName || !email || !phone || !address) {
+                showError("Please fill in all required fields.");
+                return;
+            }
+
+            if (!emailRegex.test(email)) {
+                showError("Invalid email format.");
+                document.getElementById("email").classList.add("border-red-500", "ring-2", "ring-red-200");
+                return;
+            }
+
+            if (!phoneRegex.test(phone)) {
+                showError("Invalid phone number format.");
+                document.getElementById("phone").classList.add("border-red-500", "ring-2", "ring-red-200");
+                return;
+            }
+
+            if (!terms) {
+                showError("Please agree to the Terms of Service and Privacy Policy.");
+                return;
+            }
+
+            window.orderData = {
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                address,
+                coupon: appliedCoupon || "",
+            };
+
+            openModal('confirmModal');
+        });
+
+        // Submit order
+        function submitOrder() {
+            closeModal('confirmModal');
+            const checkoutBtn = document.querySelector("button[form='checkoutForm']");
+            checkoutBtn.disabled = true;
+            checkoutBtn.innerHTML = 'Processing... <span class="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full"></span>';
+            
+            fetch("/api/create-order/", {
+                method: "POST",
+                credentials: "include",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify(window.orderData)
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw new Error(err.error || "Failed to create order"); });
+                return res.json();
+            })
+            .then(async data => {
+                await updateSuccessModalButtons(); // Update buttons based on review status
+                openModal('successModal');
+                checkoutForm.reset();
+                appliedCoupon = null;
+                loadCart();
+            })
+            .catch(err => {
+                showError(err.message || "Failed to create order. Please try again.");
+            })
+            .finally(() => {
+                checkoutBtn.disabled = false;
+                checkoutBtn.innerHTML = '<i class="fas fa-check"></i> Complete Order';
+            });
+        }
+
+        // Input validation
+        document.querySelectorAll('input[required], textarea[required]').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    this.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                    showError(`${this.name} is required.`);
+                } else {
+                    this.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                    clearError();
+                }
+            });
+
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                    clearError();
+                }
+            });
+        });
+
+        document.getElementById("email").addEventListener("blur", function() {
+            if (this.value && !emailRegex.test(this.value)) {
+                this.classList.add("border-red-500", "ring-2", "ring-red-200");
+                showError("Invalid email format.");
+            }
+        });
+
+        document.getElementById("phone").addEventListener("blur", function() {
+            if (this.value && !phoneRegex.test(this.value)) {
+                this.classList.add("border-red-500", "ring-2", "ring-red-200");
+                showError("Invalid phone number format.");
+            }
+        });
+
+        // Load cart on page load
+        document.addEventListener('DOMContentLoaded', loadCart);
+    </script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | E-commerce Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style/settings.css">
+    <link rel="stylesheet" href="/static/style/Dashboard.css">
+    <link rel="stylesheet" href="/static/style/orders.css">
+    <link rel="stylesheet" href="/static/style/product.css">
+    <link rel="stylesheet" href="/static/style/customers.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+    <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            font-family: 'Poppins', sans-serif;
+        }
+        .notification.show {
+            display: block;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shopping-bag"></i>
+                <span>ShopAdmin</span>
+            </div>
+            <ul class="menu">
+                <li>
+                    <a href="{% url 'Dashboard' %}">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'product' %}">
+                        <i class="fas fa-box"></i>
+                        <span>Products</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'orders' %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>Orders</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'customers' %}">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'messages' %}">
+                        <i class="fas fa-box"></i>
+                        <span>Messages</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'discounts' %}">
+                        <i class="fas fa-tag"></i>
+                        <span>Discounts</span>
+                    </a>
+                </li>
+                <li class="active">
+                    <a href="{% url 'settings' %}">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{% url 'Logout' %}">
+                        <i class="fas fa-box"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Navigation -->
+            <div class="top-nav">
+                <div class="search-box">
+                </div>
+                {% include "admin.html" %}
+            </div>
+
+            <!-- Settings Content -->
+            <div class="content">
+                <div id="notification" class="notification"></div>
+                <div class="page-header">
+                    <h1>Store Settings</h1>
+                </div>
+                
+                <!-- Settings Tabs -->
+                <div class="settings-tabs">
+                    <div class="tabs-header">
+                        <button class="tab-btn active" data-tab="admin-profile">Admin Profile</button>
+                        <button class="tab-btn" data-tab="contact-settings">Contact</button>
+                        <button class="tab-btn" data-tab="about">About</button>
+                        <button class="tab-btn" data-tab="home-settings">Store Settings</button>
+                    </div>
+                    
+                    <div class="tabs-content">
+                        <!-- Admin Profile Tab -->
+                        <div class="tab-pane active" id="admin-profile">
+                            <div class="settings-section">
+                                <h3>Admin Profile</h3>
+                                <input type="hidden" id="admin-profile-id">
+                                <div class="form-group">
+                                    <label for="admin-username">Username</label>
+                                    <input type="text" id="admin-username" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-email">Email</label>
+                                    <input type="email" id="admin-email" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-first-name">First Name</label>
+                                    <input type="text" id="admin-first-name" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-last-name">Last Name</label>
+                                    <input type="text" id="admin-last-name" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="admin-image">Profile Image</label>
+                                    <input type="file" id="admin-image" accept="image/*">
+                                    <img id="admin-image-preview" src="" alt="Profile Preview" style="max-width: 100px; display: none;">
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-save" data-tab="admin-profile"><i class="fas fa-save"></i> Save</button>
+                                    <button class="btn-delete" data-tab="admin-profile"><i class="fas fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Contact Settings Tab -->
+                        <div class="tab-pane" id="contact-settings">
+                            <div class="settings-section">
+                                <h3>Contact Information</h3>
+                                <input type="hidden" id="contact-settings-id">
+                                <div class="form-group">
+                                    <label for="contact-address">Address</label>
+                                    <textarea id="contact-address" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-city">City</label>
+                                    <input type="text" id="contact-city" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-phone">Phone</label>
+                                    <input type="tel" id="contact-phone" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-primary-email">Primary Email</label>
+                                    <input type="email" id="contact-primary-email" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-secondary-email">Secondary Email</label>
+                                    <input type="email" id="contact-secondary-email" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-instagram">Instagram URL</label>
+                                    <input type="url" id="contact-instagram" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-youtube">YouTube URL</label>
+                                    <input type="url" id="contact-youtube" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-facebook">Facebook URL</label>
+                                    <input type="url" id="contact-facebook" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="contact-whatsapp">WhatsApp URL</label>
+                                    <input type="url" id="contact-whatsapp" value="">
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-save" data-tab="contact-settings"><i class="fas fa-save"></i> Save</button>
+                                    <button class="btn-delete" data-tab="contact-settings"><i class="fas fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- About Tab -->
+                        <div class="tab-pane" id="about">
+                            <div class="settings-section">
+                                <h3>About Store</h3>
+                                <input type="hidden" id="about-id">
+                                <div class="form-group">
+                                    <label for="about-title">Title</label>
+                                    <input type="text" id="about-title" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="about-description">Description</label>
+                                    <textarea id="about-description" rows="5"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="about-paragraph-1">Paragraph 1</label>
+                                    <textarea id="about-paragraph-1" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="about-paragraph-2">Paragraph 2</label>
+                                    <textarea id="about-paragraph-2" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="about-paragraph-3">Paragraph 3</label>
+                                    <textarea id="about-paragraph-3" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="about-image-1">Image</label>
+                                    <input type="file" id="about-image-1" accept="image/*">
+                                    <img id="about-image-1-preview" src="" alt="Image Preview" style="max-width: 100px; display: none;">
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-save" data-tab="about"><i class="fas fa-save"></i> Save</button>
+                                    <button class="btn-delete" data-tab="about"><i class="fas fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Store Settings Tab -->
+                        <div class="tab-pane" id="home-settings">
+                            <div class="settings-section">
+                                <h3>Store Settings</h3>
+                                <input type="hidden" id="home-settings-id">
+                                <div class="form-group">
+                                    <label for="site-title">Site Title</label>
+                                    <input type="text" id="site-title" value="">
+                                </div>
+                                <div class="form-group">
+                                    <label for="site-description">Site Description</label>
+                                    <textarea id="site-description" rows="5"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="welcome-message">Welcome Message</label>
+                                    <textarea id="welcome-message" rows="3"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="logo">Logo</label>
+                                    <input type="file" id="logo" accept="image/*">
+                                    <img id="logo-preview" src="" alt="Logo Preview" style="max-width: 100px; display: none;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="banner-image">Banner Image</label>
+                                    <input type="file" id="banner-image" accept="image/*">
+                                    <img id="banner-image-preview" src="" alt="Banner Preview" style="max-width: 100px; display: none;">
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-save" data-tab="home-settings"><i class="fas fa-save"></i> Save</button>
+                                    <button class="btn-delete" data-tab="home-settings"><i class="fas fa-trash"></i> Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/scripts/settings.js"></script>
+</body>
+</html>

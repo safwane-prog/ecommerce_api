@@ -1,0 +1,495 @@
+/* Settings Page Specific Styles */
+.btn-save {
+    background: #6c5ce7;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    background: #5649be;
+}
+
+.settings-tabs {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.tabs-header {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    overflow-x: auto;
+}
+
+.tab-btn {
+    padding: 15px 20px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    position: relative;
+    white-space: nowrap;
+}
+
+.tab-btn.active {
+    color: #6c5ce7;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #6c5ce7;
+}
+
+.tabs-content {
+    padding: 20px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.settings-section h3 {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #6c5ce7;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+.switch-label {
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.payment-method {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.method-header {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+}
+
+.method-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.method-info img {
+    height: 25px;
+    width: auto;
+}
+
+.method-settings {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #eee;
+}
+
+.shipping-zones {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.shipping-zone {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.zone-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f9f9f9;
+}
+
+.zone-header h4 {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-edit-zone {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.zone-details {
+    padding: 15px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.btn-add-zone {
+    background: #f5f5f9;
+    border: 1px dashed #ddd;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-add-zone:hover {
+    background: #e0e0e8;
+}
+
+.tax-classes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tax-class {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.btn-edit-tax {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-add-tax {
+    background: #f5f5f9;
+    border: 1px dashed #ddd;
+    padding: 12px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-add-tax:hover {
+    background: #e0e0e8;
+}
+
+.tax-rates-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+}
+
+.tax-rates-table th {
+    text-align: left;
+    padding: 12px;
+    background: #f5f5f9;
+    font-size: 13px;
+    color: #555;
+}
+
+.tax-rates-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    color: #555;
+}
+
+.btn-edit-tax-rate, .btn-delete-tax-rate {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-edit-tax-rate {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.btn-edit-tax-rate:hover {
+    background: #bae6fd;
+}
+
+.btn-delete-tax-rate {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.btn-delete-tax-rate:hover {
+    background: #fecaca;
+}
+
+.btn-add-tax-rate {
+    background: #f5f5f9;
+    border: 1px dashed #ddd;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-add-tax-rate:hover {
+    background: #e0e0e8;
+}
+
+.notification-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.notification-type {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.email-templates {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.email-template {
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.email-template i {
+    font-size: 20px;
+    color: #6c5ce7;
+}
+
+.email-template span {
+    flex: 1;
+    font-size: 14px;
+}
+
+.btn-customize {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.api-key-container {
+    display: flex;
+    gap: 10px;
+}
+
+.api-key-container input {
+    flex: 1;
+}
+
+.btn-copy-api, .btn-regenerate-api {
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-copy-api {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: none;
+}
+
+.btn-regenerate-api {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: none;
+}
+
+.btn-clear-cache, .btn-system-logs {
+    background: #f5f5f9;
+    border: 1px solid #ddd;
+    padding: 8px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-clear-cache:hover, .btn-system-logs:hover {
+    background: #e0e0e8;
+}
+
+.system-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.system-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.system-info .info-row span:first-child {
+    color: #666;
+    font-weight: 500;
+}
+
+/* Multiple Select Styling */
+select[multiple] {
+    height: auto;
+    min-height: 100px;
+    padding: 5px;
+}
+
+select[multiple] option {
+    padding: 5px 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .notification-types, .email-templates {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .api-key-container {
+        flex-direction: column;
+    }
+    
+    .api-key-container input {
+        width: 100%;
+    }
+}

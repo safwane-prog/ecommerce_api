@@ -1,0 +1,181 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">إنشاء حساب</h2>
+        <form id="registerForm" class="space-y-4" method="POST">
+            {% csrf_token %}
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">اسم المستخدم</label>
+                <input type="text" id="username" name="username" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
+                <input type="email" id="email" name="email" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">كلمة المرور</label>
+                <input type="password" id="password" name="password" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+            </div>
+            <div>
+                <label for="first_name" class="block text-sm font-medium text-gray-700">الاسم الأول</label>
+                <input type="text" id="first_name" name="first_name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+                <label for="last_name" class="block text-sm font-medium text-gray-700">الاسم الأخير</label>
+                <input type="text" id="last_name" name="last_name" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700">رقم الهاتف</label>
+                <input type="text" id="phone" name="phone" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+                <label for="address" class="block text-sm font-medium text-gray-700">العنوان</label>
+                <input type="text" id="address" name="address" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">إنشاء الحساب</button>
+        </form>
+        <p id="error" class="text-red-500 text-sm mt-4 hidden"></p>
+        <p id="success" class="text-green-500 text-sm mt-4 hidden"></p>
+    </div>
+    <script>
+        function getCsrfToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        async function refreshToken() {
+            try {
+                const response = await fetch('/api/users/token/refresh/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({})
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Token refreshed:', data);
+                    setCookie('access_token', data.access, 1);
+                    setCookie('refresh_token', data.refresh, 30);
+                    return data.access;
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Refresh token failed');
+                }
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                window.location.href = '/login/';
+                return null;
+            }
+        }
+
+        async function fetchWithToken(url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['Authorization'] = `Bearer ${getCookie('access_token')}`;
+            options.headers['X-CSRFToken'] = getCsrfToken();
+            options.credentials = 'include';
+
+            let response = await fetch(url, options);
+
+            if (response.status === 401) {
+                const newAccessToken = await refreshToken();
+                if (newAccessToken) {
+                    options.headers['Authorization'] = `Bearer ${newAccessToken}`;
+                    response = await fetch(url, options);
+                }
+            }
+
+            return response;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorElement = document.getElementById('error');
+            const successElement = document.getElementById('success');
+            errorElement.classList.add('hidden');
+            successElement.classList.add('hidden');
+
+            const formData = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                userprofile: {
+                    first_name: document.getElementById('first_name').value,
+                    last_name: document.getElementById('last_name').value,
+                    phone: document.getElementById('phone').value,
+                    address: document.getElementById('address').value
+                }
+            };
+
+            try {
+                const response = await fetch('/api/users/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCsrfToken()
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    setCookie('access_token', data.access, 1);
+                    setCookie('refresh_token', data.refresh, 30);
+                    successElement.textContent = 'تم إنشاء الحساب بنجاح! جارٍ إعادة التوجيه إلى تسجيل الدخول...';
+                    successElement.classList.remove('hidden');
+                    setTimeout(() => window.location.href = '/login/', 2000);
+                } else {
+                    errorElement.textContent = data.detail || Object.values(data).join(', ') || 'فشل إنشاء الحساب. يرجى التحقق من المدخلات.';
+                    errorElement.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorElement.textContent = 'حدث خطأ. يرجى المحاولة مرة أخرى.';
+                errorElement.classList.remove('hidden');
+            }
+        });
+
+        setInterval(async () => {
+            const accessToken = getCookie('access_token');
+            if (accessToken) {
+                await refreshToken();
+            }
+        }, 14 * 60 * 1000);
+    </script>
+</body>
+</html>
