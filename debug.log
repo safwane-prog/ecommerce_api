@@ -12986,3 +12986,8 @@ WARNING 2025-06-16 13:57:56,384 log Not Found: /.well-known/appspecific/com.chro
 WARNING 2025-06-16 13:57:57,659 log Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-06-16 13:57:58,747 log Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-06-16 13:57:59,649 log Not Found: /.well-known/appspecific/com.chrome.devtools.json
+INFO 2025-06-21 17:29:57,135 autoreload Watching for file changes with StatReloader
+INFO 2025-06-21 17:42:11,452 autoreload Watching for file changes with StatReloader
+WARNING 2025-06-21 17:42:17,064 log Not Found: /favicon.ico
+WARNING 2025-06-21 17:42:20,704 log Unauthorized: /api/users/status/
+WARNING 2025-06-21 17:42:20,720 log Unauthorized: /api/users/status/
